@@ -7,7 +7,6 @@ toolName = "Copy Diagonal Anims v"
 toolVersion = 0.9
 toolFullName = toolName + str(toolVersion)
 
-
 hikList = FBSystem().Scene.Characters
 
 #lists
@@ -24,8 +23,6 @@ global pickedUI
 pickedUI = pickedUI8Diag
 
 rotationDeltaTab = [45, 90]
-
-
 
 
 #get take to fbstory
@@ -76,7 +73,7 @@ def rotate_clips():
         copiedClip = clip.Clone()
         newTrack.Clips.append(copiedClip)
         copiedClip.Rotation = FBVector3d(0, rotationOffset, 0)
-        copiedClip.Name = originTakeName + "_" + str(diagonalName)
+        copiedClip.Name = fixedTakeNameTxt.Caption + "_" + str(diagonalName)
         newTrack.Mute = True
     return tracksToPlot
 
@@ -95,7 +92,6 @@ def PlotStoryClip():
     char = selectedCharacter
     char.PlotAnimation (FBCharacterPlotWhere.kFBCharacterPlotOnSkeleton,lPlotClipOptions )               
     char.PlotAnimation(FBCharacterPlotWhere.kFBCharacterPlotOnControlRig,lPlotClipOptions ) 
- 
 
 def plot_rotated_clips_to_new_takes():
     tracksToPlot = rotate_clips()
@@ -104,6 +100,7 @@ def plot_rotated_clips_to_new_takes():
     for cTrack in tracksToPlot:
         newtakeName = cTrack.Clips[0].Name
         FBSystem().CurrentTake.CopyTake(newtakeName)
+        print(newtakeName)
         cTrack.Mute = False
         #bake curr clip
         PlotStoryClip()
@@ -121,6 +118,7 @@ def after_plotting(deleteTracks):
 
 
 def BtnCallback(control, event):
+    update_take_name()
     if control.Caption == "Process":
         print("procesed")
         set_all_picked()
@@ -133,6 +131,8 @@ def BtnCallback(control, event):
         hikList = FBSystem().Scene.Characters
         refresh_diagonal_list(hikListUI, hikList)
         print("R")
+    elif control.Caption == "Slider":
+        print(control.Value)
 
 
 def refresh_diagonal_list(listUI, list):
@@ -151,9 +151,10 @@ def CreateButton(caption):
     button.OnClick.Add(BtnCallback)
     return button
 
-def CreateSpace():
+
+def CreateText(text):
     emptySpace = FBLabel()
-    emptySpace.Caption = ""
+    emptySpace.Caption = text
     return emptySpace
 
 def CreateLine(name, height, mainLyt):
@@ -183,7 +184,7 @@ def PopulateLayout_Stage3(mainLyt):
     refresh_diagonal_list(choosenDiagonalUI, choosenDiagonalTab)
     lyt.Add(choosenDiagonalUI, 60)
 
-    space = CreateSpace()
+    space = CreateText("")
     lyt.Add(space, 5)
 
     global hikListUI
@@ -200,23 +201,45 @@ def PopulateLayout_Stage3(mainLyt):
         pickedDiagonalUI.Items.append(pickedDiag)
     lyt.Add(pickedDiagonalUI, 60)
 
-    space = CreateSpace()
+    space = CreateText("")
     lyt.Add(space, 10)
     
     createBtn = CreateButton("Process")
     lyt.Add(createBtn,90)
 
-    space = CreateSpace()
+    space = CreateText("")
     lyt.Add(space, 5)
 
     createBtn = CreateButton("R")
     lyt.Add(createBtn,25)
 
+    lyt = CreateLine("thirfRow", 70, mainLyt)
+
+    global fixedTakeNameTxt
+    fixedTakeNameTxt = CreateText(FBSystem().CurrentTake.Name)
+    lyt.Add(fixedTakeNameTxt, 70)
+    
+
+    txtSample = CreateText("Set prefix")
+    lyt.Add(txtSample, 50)
+    space = CreateText("")
+    lyt.Add(space, 5)
+
+    global slider
+    slider = FBEditNumber()
+    slider.Caption = "Slider"
+    slider.Min = 0  
+    slider.Max = 5  #take txt length
+    slider.SmallStep = 1
+    slider.Precision = 1
+    slider.OnChange.Add(BtnCallback)
+    lyt.Add(slider, 50)
+
 def CreateUI():
     global toolFullName
     t = FBCreateUniqueTool(toolFullName)
     t.StartSizeX = 230
-    t.StartSizeY = 95
+    t.StartSizeY = 120
     PopulateLayout_Stage3(t)
     ShowTool(t)
     
@@ -234,3 +257,11 @@ def set_all_picked():
     selectedCharacter = hikList[hikListUI.ItemIndex]
     print("Char: " + selectedCharacter.Name)
     currentAngle = choosenDiagonalTab[choosenDiagonalUI.ItemIndex]
+
+def update_take_name():
+    slider.Max = len(FBSystem().CurrentTake.Name)
+    fixedTakeName = FBSystem().CurrentTake.Name
+    sliderTxtRemove = int(slider.Value)
+    if sliderTxtRemove != 0:
+        fixedTakeName = fixedTakeName[:-sliderTxtRemove]
+    fixedTakeNameTxt.Caption = fixedTakeName
