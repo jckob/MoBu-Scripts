@@ -1,10 +1,10 @@
 #CopyDiagonalAnims
-#ver.0.9
+#ver. 1.0
 from pyfbsdk import *
 from pyfbsdk_additions import *
 
 toolName = "Copy Diagonal Anims v"
-toolVersion = 0.9
+toolVersion = 1.1
 toolFullName = toolName + str(toolVersion)
 
 hikList = FBSystem().Scene.Characters
@@ -15,14 +15,14 @@ diagonal4Sides = ["Front","Left","Back", "Right"]
 allDiagonalSides = [diagonal8Sides, diagonal4Sides]
 choosenDiagonalTab = allDiagonalSides[0]
 
+rotationDeltaTab = [45, 90]
+
 pickedUI4Diag = "+ 4"
 pickedUI8Diag = "* 8"
 pickedUITab = [pickedUI8Diag, pickedUI4Diag]
 
 global pickedUI
 pickedUI = pickedUI8Diag
-
-rotationDeltaTab = [45, 90]
 
 
 #get take to fbstory
@@ -43,7 +43,7 @@ def adjust_track_and_related():
     clip = track.Clips[0]
     return clip
 
-def details_for_rotation_data():
+def get_rotation_details():
     clip = adjust_track_and_related()
     originalYRotation = clip.Rotation[1]
     rotationOffset = originalYRotation
@@ -56,11 +56,10 @@ def details_for_rotation_data():
     
 
 def rotate_clips():
-    clip, rotationOffset, deltaRotationOffset = details_for_rotation_data()
+    clip, rotationOffset, deltaRotationOffset = get_rotation_details()
     tracksToPlot = []
     indexOffset = choosenDiagonalTab.index(currentAngle)
     #create track, add clips, and rotate it
-    print(len(choosenDiagonalTab))
     for i in range(1,len(choosenDiagonalTab)):
         rotationOffset += deltaRotationOffset
         newTrack = FBStoryTrack(FBStoryTrackType.kFBStoryTrackCharacter, FBStory().RootFolder)
@@ -116,6 +115,26 @@ def after_plotting(deleteTracks):
     for singleTrack in deleteTracks:
         singleTrack.FBDelete()
 
+def set_all_picked():
+    global choosenDiagonalTab, currentAngle, selectedCharacter
+    pickedUI = pickedUITab[pickedDiagonalUI.ItemIndex]
+    choosenDiagonalTab = allDiagonalSides[pickedDiagonalUI.ItemIndex]
+    print("Picked: "+ str(pickedUI))
+    print("Diag: "+ str(choosenDiagonalTab))
+
+    hikList = FBSystem().Scene.Characters
+    selectedCharacter = hikList[hikListUI.ItemIndex]
+    print("Char: " + selectedCharacter.Name)
+    currentAngle = choosenDiagonalTab[choosenDiagonalUI.ItemIndex]
+
+def update_take_name():
+    slider.Max = len(FBSystem().CurrentTake.Name)
+    fixedTakeName = FBSystem().CurrentTake.Name
+    sliderTxtRemove = int(slider.Value)
+    if sliderTxtRemove != 0:
+        fixedTakeName = fixedTakeName[:-sliderTxtRemove]
+    fixedTakeNameTxt.Caption = fixedTakeName
+
 
 def BtnCallback(control, event):
     update_take_name()
@@ -143,14 +162,12 @@ def refresh_diagonal_list(listUI, list):
         else:
             listUI.Items.append(item.Name)
 
-
 def CreateButton(caption):
     button = FBButton()
     button.Caption = str(caption)
     button.Justify = FBTextJustify.kFBTextJustifyCenter
     button.OnClick.Add(BtnCallback)
     return button
-
 
 def CreateText(text):
     emptySpace = FBLabel()
@@ -172,7 +189,7 @@ def CreateList(caption):
     textInput.Caption = caption
     textInput.OnChange.Add(BtnCallback)
     return textInput
-    
+  
     
 def PopulateLayout_Stage3(mainLyt):
 
@@ -213,13 +230,14 @@ def PopulateLayout_Stage3(mainLyt):
     createBtn = CreateButton("R")
     lyt.Add(createBtn,25)
 
-    lyt = CreateLine("thirfRow", 70, mainLyt)
+    lyt = CreateLine("thirdRow", 70, mainLyt)
 
     global fixedTakeNameTxt
     fixedTakeNameTxt = CreateText(FBSystem().CurrentTake.Name)
     lyt.Add(fixedTakeNameTxt, 70)
     
-
+    space = CreateText("")
+    lyt.Add(space, 10)
     txtSample = CreateText("Set prefix")
     lyt.Add(txtSample, 50)
     space = CreateText("")
@@ -229,39 +247,18 @@ def PopulateLayout_Stage3(mainLyt):
     slider = FBEditNumber()
     slider.Caption = "Slider"
     slider.Min = 0  
-    slider.Max = 5  #take txt length
+    slider.Max = 10
     slider.SmallStep = 1
     slider.Precision = 1
     slider.OnChange.Add(BtnCallback)
-    lyt.Add(slider, 50)
+    lyt.Add(slider, 30)
 
 def CreateUI():
     global toolFullName
     t = FBCreateUniqueTool(toolFullName)
     t.StartSizeX = 230
-    t.StartSizeY = 120
+    t.StartSizeY = 125
     PopulateLayout_Stage3(t)
     ShowTool(t)
     
 CreateUI()
-
-
-def set_all_picked():
-    global choosenDiagonalTab, currentAngle, selectedCharacter
-    pickedUI = pickedUITab[pickedDiagonalUI.ItemIndex]
-    choosenDiagonalTab = allDiagonalSides[pickedDiagonalUI.ItemIndex]
-    print("Picked: "+ str(pickedUI))
-    print("Diag: "+ str(choosenDiagonalTab))
-
-    hikList = FBSystem().Scene.Characters
-    selectedCharacter = hikList[hikListUI.ItemIndex]
-    print("Char: " + selectedCharacter.Name)
-    currentAngle = choosenDiagonalTab[choosenDiagonalUI.ItemIndex]
-
-def update_take_name():
-    slider.Max = len(FBSystem().CurrentTake.Name)
-    fixedTakeName = FBSystem().CurrentTake.Name
-    sliderTxtRemove = int(slider.Value)
-    if sliderTxtRemove != 0:
-        fixedTakeName = fixedTakeName[:-sliderTxtRemove]
-    fixedTakeNameTxt.Caption = fixedTakeName
