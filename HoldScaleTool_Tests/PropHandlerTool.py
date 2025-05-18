@@ -5,22 +5,66 @@
 
 from pyfbsdk import *
 from pyfbsdk_additions import * 
-#from  DeltaCorrect import apply_corrections
+import sys
+sys.path.append("..")
+#from DeltaCorrect import *
+#import Setter
 
 toolName = "Prop Handler Tool  v"
 toolVersion = 0.1
 toolFullName = toolName + str(toolVersion)
 
-wrist1 = FBFindModelByLabelName("RightFingerBase")
-prop1 = FBFindModelByLabelName("Mocap_Prop")
+class PickedObjects:
+    mocapWrist = FBFindModelByLabelName("RightFingerBase")
+    mocapProp = FBFindModelByLabelName("Mocap_Prop")
 
-wrist2 = FBFindModelByLabelName("Aragor:RightHand")
-prop2 = FBFindModelByLabelName("Test_Offset")
+    retWrist = FBFindModelByLabelName("Aragor:RightHand")
+    retProp = FBFindModelByLabelName("Test_Offset")
+
+    propRoot = FBFindModelByLabelName("rootProp")
+
+def assign_prop_mocap(isWireFrameOn):
+    PickedObjects.propRoot.Parent = PickedObjects.mocapProp
+    PickedObjects.propRoot
+    set_prop_visibility()
+    
+    #offset prop to fit mocap char
+def set_prop_visibility(isWireFrameOn):
+    if isWireFrameOn:
+        PickedObjects.propRoot.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
+    else:
+        PickedObjects.propRoot.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
+def create_retarget_markers(propname):
+    propMaker = FBModelMarker("Re_" + str(propname))
+    propMaker.Show = True
+    propMaker.MarkerSize = 200
+    propMaker.Color = FBColor(0.9, 1, 0)
+    propMaker.Look = FBMarkerLook.kFBMarkerLookLightCross
+    
+
+    propOffsetMaker = FBModelMarker("Re_Offset_" + str(propname))
+    propOffsetMaker.Show = True
+    propOffsetMaker.MarkerSize = 400
+    propOffsetMaker.Color = FBColor(1, 0, 0.9)
+    propOffsetMaker.Look = FBMarkerLook.kFBMarkerLookCircle
+    
+
+    propOffsetMaker.Parent = propMaker
+    propMaker.Parent = PickedObjects.retWrist
+
+    propMaker.Translation = FBVector3d(0,0,0)
+    propMaker.Rotation = FBVector3d(0,0,0)
+
+### testing funcs:
+#assign_prop_mocap(True)
+#create_retarget_markers("toDELETE")
+
 
 def BtnCallback(control, event):
     if control.Caption == "R":
         print("R")
         CreateSetterUI()
+        print(PickedObjects.mocapWrist.Name)
 
 def SetupPropertyList(model):
     global container
@@ -48,8 +92,7 @@ def EventContainerDragAndDrop(control, event):
         event.Accept()
     elif event.State == FBDragAndDropState.kFBDragAndDropDrop:
         SetupPropertyList( event.Components[0] )
-
-
+        
 
 def CreateButton(caption):
     button = FBButton()
@@ -91,8 +134,8 @@ def PopulateLayout_Stage_Main(mainLyt):
 def CreateMainUI():
     global toolFullName
     t = FBCreateUniqueTool(toolFullName)
-    t.StartSizeX = 230
-    t.StartSizeY = 125
+    t.StartSizeX = 250
+    t.StartSizeY = 400
     PopulateLayout_Stage_Main(t)
     ShowTool(t)
 
@@ -116,5 +159,5 @@ def CreateSetterUI():
 
 
 CreateMainUI()
-CreateSetterUI()
+
 

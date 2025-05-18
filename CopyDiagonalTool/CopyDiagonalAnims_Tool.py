@@ -162,8 +162,6 @@ def BtnCallback(control, event):
         print(control.Value)
 
 
-
-
 def CreateButton(caption):
     button = FBButton()
     button.Caption = str(caption)
