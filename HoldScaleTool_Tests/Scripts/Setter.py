@@ -19,21 +19,15 @@ def SetupPropertyList(model):
     tool.list.Items.removeAll()
     tool.prop_list = []
     
-    tool.prop.Property = None
-    tool.prop_modern.Property = None
     
     tool.model = model
     
     if model:
         tool.container.Items.append(model.Name)
-        tool.list.Items.append("<Select Property>")
         tool.prop_list.append(None)
-        for p in model.PropertyList:
-            if p and p.IsInternal() and not p.GetPropertyFlag(FBPropertyFlag.kFBPropertyFlagHideProperty):
-                tool.list.Items.append(p.Name)
-                tool.prop_list.append(p)
         tool.list.ItemIndex = 0
         PropertyListChanged(tool.list, None)
+    print(model.Name)
     
     
 def EventContainerDblClick(control, event):
@@ -44,33 +38,19 @@ def EventContainerDragAndDrop(control, event):
         event.Accept()
     elif event.State == FBDragAndDropState.kFBDragAndDropDrop:
         SetupPropertyList( event.Components[0] )
-
+        
 def PropertyListChanged(control, event):
     tool.prop.Property = tool.prop_list[control.ItemIndex]
     tool.prop_modern.Property = tool.prop_list[control.ItemIndex]
 
-def PrevProperty(control, event):
-    if tool.list.ItemIndex - 1 < 0:
-        tool.list.ItemIndex = len(tool.list.Items)-1
-    else:
-        tool.list.ItemIndex = tool.list.ItemIndex - 1
-    PropertyListChanged(tool.list, None)
-
-def NextProperty(control, event):
-    if tool.list.ItemIndex + 1 >= len(tool.list.Items):
-        tool.list.ItemIndex = 0
-    else:
-        tool.list.ItemIndex = tool.list.ItemIndex + 1
-    PropertyListChanged(tool.list, None)
-    
+  
 def SceneChanged(scene, event):
     if len(tool.container.Items) != 0 and \
         event.Type == FBSceneChangeType.kFBSceneChangeDetach  and \
         event.ChildComponent == tool.model:
         SetupPropertyList(None)
         
-
-def PopulateLayout(mainLyt):    
+def CreateLine(name, height, mainLyt):
     x = FBAddRegionParam(0,FBAttachType.kFBAttachLeft,"")
     y = FBAddRegionParam(0,FBAttachType.kFBAttachTop,"")
     w = FBAddRegionParam(0,FBAttachType.kFBAttachRight,"")
@@ -78,39 +58,43 @@ def PopulateLayout(mainLyt):
     mainLyt.AddRegion("main","main", x, y, w, h)
     vlyt = FBVBoxLayout()
     mainLyt.SetControl("main",vlyt)
-    
-    l = FBLabel()
-    l.Caption = "Drag and drop a model into the container. Double click to clear."
-    vlyt.Add(l,30)
-    
+    return vlyt
+
+def CreateText(text):
+    emptySpace = FBLabel()
+    emptySpace.Caption = text
+    return emptySpace
+
+def CreateInputObj():
     tool.model = None
     tool.container = FBVisualContainer()
     tool.container.OnDragAndDrop.Add(EventContainerDragAndDrop)
     tool.container.OnDblClick.Add(EventContainerDblClick)
-    vlyt.Add(tool.container,30)
+    return tool.container
+
+
+def PopulateLayout(mainLyt):    
+    vlyt = CreateLine("firstRow", 10, mainLyt)
+    
+    descriptionText = CreateText("Drag and drop a model into the container. Double click to clear.")
+    vlyt.Add(descriptionText,30)
+    wristInput = CreateInputObj()
+    vlyt.Add(tool.container,40)
+
+    tool.model = None
+    tool.container = FBVisualContainer()
+    tool.container.OnDragAndDrop.Add(EventContainerDragAndDrop)
+    tool.container.OnDblClick.Add(EventContainerDblClick)
+    vlyt.Add(tool.container,40)
     
     hlyt = FBHBoxLayout()
     tool.list = FBList()
     tool.list.OnChange.Add(PropertyListChanged) 
     hlyt.AddRelative(tool.list)
     
-    prev = FBButton()
-    prev.OnClick.Add(PrevProperty)
-    prev.Caption = "<"
-    hlyt.Add(prev, 30)
-    
-    next = FBButton()
-    next.OnClick.Add(NextProperty)
-    next.Caption = ">"
-    hlyt.Add(next, 30)
     
     vlyt.Add(hlyt, 30)
     
-    tool.prop = FBEditProperty()
-    vlyt.Add(tool.prop,30)
-    
-    tool.prop_modern = FBEditPropertyModern()
-    vlyt.Add(tool.prop_modern,30)
     
     # Register for scene event
     FBSystem().Scene.OnChange.Add(SceneChanged)
@@ -134,4 +118,4 @@ def CreateTool():
     ShowTool(tool)
     
 
-#CreateTool()
+CreateTool()

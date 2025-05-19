@@ -1,9 +1,9 @@
 from pyfbsdk import FBFindModelByLabelName, FBVector3d, FBMatrix, FBVectorMatrixMult, FBMatrixToRotation
 import math
-from PropHandlerTool import wrist1 , prop1, wrist2, prop2
 
 def apply_corrections():
     return "lol"
+
 
 def to_vector(a, b):
     return [b[i] - a[i] for i in range(3)]
@@ -101,5 +101,4 @@ else:
     new_rot = FBVector3d()
     FBMatrixToRotation(new_rot, final_matrix)
     prop2.Rotation = new_rot
-
 

@@ -2,13 +2,19 @@
 #cube.ShadingMode = FBModelShadingMode.kFBModelShadingAll
 #cube.ShadingMode = FBModelShadingMode.kFBModelShadingWire
 #cube.Show = True
+import os
+import sys
 
+# Add the current script directory to sys.path
+script_dir = os.path.dirname(__file__)
+if script_dir not in sys.path:
+    sys.path.append(script_dir)
+
+# Now this will work
 from pyfbsdk import *
 from pyfbsdk_additions import * 
-import sys
-sys.path.append("..")
-#from DeltaCorrect import *
-#import Setter
+#from DeltaCorrect import apply_corrections
+import Setter
 
 toolName = "Prop Handler Tool  v"
 toolVersion = 0.1
@@ -21,19 +27,26 @@ class PickedObjects:
     retWrist = FBFindModelByLabelName("Aragor:RightHand")
     retProp = FBFindModelByLabelName("Test_Offset")
 
-    propRoot = FBFindModelByLabelName("rootProp")
+    propRoot = FBFindModelByLabelName("Root_Prop")
 
 def assign_prop_mocap(isWireFrameOn):
-    PickedObjects.propRoot.Parent = PickedObjects.mocapProp
-    PickedObjects.propRoot
-    set_prop_visibility()
+    if PickedObjects.propRoot.Parent != PickedObjects.mocapProp:
+        PickedObjects.propRoot.Parent = PickedObjects.mocapProp
+        PickedObjects.propRoot.Translation = FBVector3d(0,0,0)
+        PickedObjects.propRoot.Rotation = FBVector3d(0,0,0)
+    else:
+        print("Prop IS already assigned to mocap")
+    set_prop_visibility(isWireFrameOn)
     
     #offset prop to fit mocap char
+
 def set_prop_visibility(isWireFrameOn):
-    if isWireFrameOn:
-        PickedObjects.propRoot.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
-    else:
-        PickedObjects.propRoot.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
+    if PickedObjects.propRoot.Children[0]:
+        if isWireFrameOn:
+            PickedObjects.propRoot.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
+        else:
+            PickedObjects.propRoot.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
+
 def create_retarget_markers(propname):
     propMaker = FBModelMarker("Re_" + str(propname))
     propMaker.Show = True
@@ -55,16 +68,24 @@ def create_retarget_markers(propname):
     propMaker.Translation = FBVector3d(0,0,0)
     propMaker.Rotation = FBVector3d(0,0,0)
 
+def create_relation_constraint():
+    print("TO DO...")
+
 ### testing funcs:
-#assign_prop_mocap(True)
+assign_prop_mocap(True)
 #create_retarget_markers("toDELETE")
 
 
 def BtnCallback(control, event):
-    if control.Caption == "R":
-        print("R")
-        CreateSetterUI()
+    if control.Caption == "Set Objects":
+        #CreateSetterUI()
         print(PickedObjects.mocapWrist.Name)
+        Setter.CreateTool()
+    elif control.Caption == "Assign Mocap":
+        print("assigning mocap...")
+        assign_prop_mocap(wireFrameBtn.State)
+    elif control.Caption == "Prop Vis":
+        set_prop_visibility(wireFrameBtn.State)
 
 def SetupPropertyList(model):
     global container
@@ -92,7 +113,7 @@ def EventContainerDragAndDrop(control, event):
         event.Accept()
     elif event.State == FBDragAndDropState.kFBDragAndDropDrop:
         SetupPropertyList( event.Components[0] )
-        
+ 
 
 def CreateButton(caption):
     button = FBButton()
@@ -107,7 +128,7 @@ def CreateText(text):
     return emptySpace
 
 def CreateLine(name, height, mainLyt):
-    x = FBAddRegionParam(0,FBAttachType.kFBAttachLeft,"")
+    x = FBAddRegionParam(10,FBAttachType.kFBAttachLeft,"")
     y = FBAddRegionParam(height,FBAttachType.kFBAttachTop,"")
     w = FBAddRegionParam(0,FBAttachType.kFBAttachRight,"")
     h = FBAddRegionParam(25,FBAttachType.kFBAttachNone,"")
@@ -126,10 +147,43 @@ def CreateList(caption):
 def PopulateLayout_Stage_Main(mainLyt):
 
     #txt input:
-    lyt = CreateLine("firstRow", 10, mainLyt)
+    lyt = CreateLine("firstRow", 20, mainLyt)
 
-    createBtn = CreateButton("R")
-    lyt.Add(createBtn,25)
+    createBtn = CreateButton("Set Objects")
+    lyt.Add(createBtn,115)
+
+    lyt = CreateLine("secondRow", 55, mainLyt)
+
+    createBtn = CreateButton("Assign Mocap")
+    lyt.Add(createBtn,115)
+
+    global wireFrameBtn
+    wireFrameBtn = CreateButton("Prop Vis")
+    wireFrameBtn.Style = FBButtonStyle.kFB2States
+    wireFrameBtn.Look = FBButtonLook.kFBLookColorChange
+    wireFrameBtn.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.6, 0.4, 0.4))
+    lyt.Add(wireFrameBtn,75)
+
+
+    lyt = CreateLine("thirdRow", 90, mainLyt)
+
+    createBtn = CreateButton("Pre Retarget")
+    lyt.Add(createBtn,115)
+
+    lyt = CreateLine("fourthRow", 125, mainLyt)
+
+    dotCorrectionBtn = CreateButton("DOT Correct")
+    dotCorrectionBtn.Style = FBButtonStyle.kFB2States
+    dotCorrectionBtn.Look = FBButtonLook.kFBLookColorChange
+    dotCorrectionBtn.SetStateColor(FBButtonState.kFBButtonState0,FBColor(1.0, 0.0, 0.0))
+    dotCorrectionBtn.SetStateColor(FBButtonState.kFBButtonState1,FBColor(0.0, 0.0, 1.0))
+    lyt.Add(dotCorrectionBtn,115)
+
+    lyt = CreateLine("lastRow", 155, mainLyt)
+    space = CreateText(" ")
+    lyt.Add(space, 10)
+    lastTaskText = CreateText("NOW do offset")
+    lyt.Add(lastTaskText, 120)
 
 def CreateMainUI():
     global toolFullName
@@ -159,5 +213,3 @@ def CreateSetterUI():
 
 
 CreateMainUI()
-
-
