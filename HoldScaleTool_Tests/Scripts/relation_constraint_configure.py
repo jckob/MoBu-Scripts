@@ -1,7 +1,13 @@
 from pyfbsdk import FBFindModelByLabelName, FBConstraintRelation, FBConnect
 
+mocapPropName = "Mocap_Prop"
+propBoneName = "Root_Prop"
+retPropBoneName = "RetProp_Name"
+retOffsetName = "Offset"
+mocapCharBoneName = "RightFingerBase"
+charBoneName = "Aragor:RightHand"
 
-def define_objects(mocapPropName, propBoneName, retPropBoneName, retOffsetName, mocapCharBoneName, charBoneName):
+def define_objects():
     mocapProp = FBFindModelByLabelName(mocapPropName)
     propBone = FBFindModelByLabelName(propBoneName)
 
@@ -60,9 +66,7 @@ def connect_boxes(mocapProp_BoxIn, mocapCharBone_BoxIn, charBone_BoxIn, retOffse
 
 # def objs: "Mocap_Prop", "Root_Prop", "RetProp_Name" "Offset" "RightFingerBase" "Aragor:RightHand"
 def create_relation():
-    mocapProp_BoxIn, mocapCharBone_BoxIn, charBone_BoxIn, retOffset_BoxIn, retProp_BoxOut, retPropBone_BoxOut, addNodeBox_1, subNodeBox_2 = define_objects("Mocap_Prop", "Root_Prop", "RetProp_Name", "Offset", "RightFingerBase", "Aragor:RightHand")
+    mocapProp_BoxIn, mocapCharBone_BoxIn, charBone_BoxIn, retOffset_BoxIn, retProp_BoxOut, retPropBone_BoxOut, addNodeBox_1, subNodeBox_2 = define_objects()
     connect_boxes(mocapProp_BoxIn, mocapCharBone_BoxIn, charBone_BoxIn, retOffset_BoxIn, retProp_BoxOut, retPropBone_BoxOut, addNodeBox_1, subNodeBox_2)
 
-if __name__ == "__main__":
-    create_relation()
 # This script defines a constraint relation in MotionBuilder to connect various objects and their transformations.

@@ -70,10 +70,12 @@ def create_retarget_markers(propname):
     propMaker.Rotation = FBVector3d(0,0,0)
 
 def create_relation_constraint():
-    print("TO DO...")
+    create_retarget_markers("Test_Offset")
+    create_relation()
+    
 
 ### testing funcs:
-assign_prop_mocap(True)
+#assign_prop_mocap(True)
 #create_retarget_markers("toDELETE")
 
 
@@ -87,6 +89,8 @@ def BtnCallback(control, event):
         assign_prop_mocap(wireFrameBtn.State)
     elif control.Caption == "Prop Vis":
         set_prop_visibility(wireFrameBtn.State)
+    elif control.Caption == "Pre Retarget":
+        create_relation_constraint()
 
 def SetupPropertyList(model):
     global container
