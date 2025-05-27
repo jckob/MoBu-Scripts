@@ -15,7 +15,9 @@ from pyfbsdk import *
 from pyfbsdk_additions import * 
 #from DeltaCorrect import apply_corrections
 import Setter
-from relation_constraint_configure import create_relation
+from relation_constraint_configure import create_relation, ConstraintObjConfig
+
+ConstraintObjConfig.mocapPropName = "Mocap_Prop"
 
 toolName = "Prop Handler Tool  v"
 toolVersion = 0.1
@@ -84,12 +86,12 @@ def BtnCallback(control, event):
         #CreateSetterUI()
         print(PickedObjects.mocapWrist.Name)
         Setter.CreateTool()
-    elif control.Caption == "Assign Mocap":
+    elif control.Caption == "Set Mocap":
         print("assigning mocap...")
         assign_prop_mocap(wireFrameBtn.State)
     elif control.Caption == "Prop Vis":
         set_prop_visibility(wireFrameBtn.State)
-    elif control.Caption == "Pre Retarget":
+    elif control.Caption == "Retarget":
         create_relation_constraint()
 
 def SetupPropertyList(model):
@@ -159,7 +161,7 @@ def PopulateLayout_Stage_Main(mainLyt):
 
     lyt = CreateLine("secondRow", 55, mainLyt)
 
-    createBtn = CreateButton("Assign Mocap")
+    createBtn = CreateButton("Set Mocap")
     lyt.Add(createBtn,115)
 
     global wireFrameBtn
