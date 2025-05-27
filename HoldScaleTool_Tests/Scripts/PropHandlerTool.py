@@ -15,6 +15,7 @@ from pyfbsdk import *
 from pyfbsdk_additions import * 
 #from DeltaCorrect import apply_corrections
 import Setter
+from relation_constraint_configure import create_relation
 
 toolName = "Prop Handler Tool  v"
 toolVersion = 0.1
