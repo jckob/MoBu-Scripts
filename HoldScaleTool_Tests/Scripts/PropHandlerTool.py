@@ -1,7 +1,3 @@
-#change model to wireframe
-#cube.ShadingMode = FBModelShadingMode.kFBModelShadingAll
-#cube.ShadingMode = FBModelShadingMode.kFBModelShadingWire
-#cube.Show = True
 import os
 import sys
 
@@ -10,82 +6,98 @@ script_dir = os.path.dirname(__file__)
 if script_dir not in sys.path:
     sys.path.append(script_dir)
 
-# Now this will work
 from pyfbsdk import *
 from pyfbsdk_additions import * 
 #from DeltaCorrect import apply_corrections
-import Setter
-from relation_constraint_configure import create_relation, ConstraintObjConfig
+from Setter import AssigneObjects, CreateSetterUI
+from relation_constraint_configure import create_relation, RelationConstraintObjConfig
 
-ConstraintObjConfig.mocapPropName = "Mocap_Prop"
 
 toolName = "Prop Handler Tool  v"
 toolVersion = 0.1
 toolFullName = toolName + str(toolVersion)
+defNamespace = "ProH:"
 
 class PickedObjects:
-    mocapWrist = FBFindModelByLabelName("RightFingerBase")
     mocapProp = FBFindModelByLabelName("Mocap_Prop")
 
-    retWrist = FBFindModelByLabelName("Aragor:RightHand")
-    retProp = FBFindModelByLabelName("Test_Offset")
+    propRootBone = FBFindModelByLabelName("Root_Prop")
 
-    propRoot = FBFindModelByLabelName("Root_Prop")
+    mocapCharBone = FBFindModelByLabelName("RightFingerBase")
+    charBone = FBFindObjectByFullName("Aragor:RightHand")
+
+    #to create
+    propSource = None
+    propOffsetMaker = None
+    mocapPropRootClone = None
 
 def assign_prop_mocap(isWireFrameOn):
-    if PickedObjects.propRoot.Parent != PickedObjects.mocapProp:
-        PickedObjects.propRoot.Parent = PickedObjects.mocapProp
-        PickedObjects.propRoot.Translation = FBVector3d(0,0,0)
-        PickedObjects.propRoot.Rotation = FBVector3d(0,0,0)
-    else:
-        print("Prop IS already assigned to mocap")
-    set_prop_visibility(isWireFrameOn)
+    #LATTTEEEEEEEEEEEEEEEEEER
+    #check if namespace is already assigned
     
-    #offset prop to fit mocap char
+    newPropRig = duplicate_rig_model(PickedObjects.propRootBone, defNamespace, None)
+    #FIX: check if the name is in mocapProp.Children
+    if newPropRig in PickedObjects.mocapProp.Children:
+        print("Prop IS already assigned to mocap")
+    else:
+        newPropRig.Parent = PickedObjects.mocapProp
+        newPropRig.Translation = FBVector3d(0,0,0)
+        newPropRig.Rotation = FBVector3d(0,0,0)
+        PickedObjects.mocapPropRootClone = newPropRig
+        PickedObjects.mocapProp = PickedObjects.mocapPropRootClone
+        
+    set_prop_visibility(isWireFrameOn)
+
 
 def set_prop_visibility(isWireFrameOn):
-    if PickedObjects.propRoot.Children[0]:
+    if PickedObjects.mocapProp.Children[0]:
         if isWireFrameOn:
-            PickedObjects.propRoot.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
+            PickedObjects.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
         else:
-            PickedObjects.propRoot.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
+            PickedObjects.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
 
 def create_retarget_markers(propname):
-    propMaker = FBModelMarker("Re_" + str(propname))
-    propMaker.Show = True
-    propMaker.MarkerSize = 200
-    propMaker.Color = FBColor(0.9, 1, 0)
-    propMaker.Look = FBMarkerLook.kFBMarkerLookLightCross
+    propSource = FBModelMarker(defNamespace + str(propname))
+    propSource.Show = True
+    propSource.MarkerSize = 200
+    propSource.Color = FBColor(1, 0.5, 0)
+    propSource.Look = FBMarkerLook.kFBMarkerLookLightCross
     
 
-    propOffsetMaker = FBModelMarker("Re_Offset_" + str(propname))
+    propOffsetMaker = FBModelMarker(defNamespace + "Offset_" + str(propname))
     propOffsetMaker.Show = True
     propOffsetMaker.MarkerSize = 400
-    propOffsetMaker.Color = FBColor(1, 0, 0.9)
+    propOffsetMaker.Color = FBColor(1, 1, 0)
     propOffsetMaker.Look = FBMarkerLook.kFBMarkerLookCircle
     
+    PickedObjects.propSource = propSource
+    PickedObjects.propOffsetMaker = propOffsetMaker
 
-    propOffsetMaker.Parent = propMaker
-    propMaker.Parent = PickedObjects.retWrist
+    propOffsetMaker.Parent = propSource
+    #propSource.Parent = PickedObjects.charBone
 
-    propMaker.Translation = FBVector3d(0,0,0)
-    propMaker.Rotation = FBVector3d(0,0,0)
+    propSource.Translation = FBVector3d(0,0,0)
+    propSource.Rotation = FBVector3d(0,0,0)
+    send_objects_to_relation_constraint()
+
+
+def send_objects_to_relation_constraint():
+    RelationConstraintObjConfig.mocapPropName = PickedObjects.mocapProp.LongName
+    RelationConstraintObjConfig.retPropBoneName = PickedObjects.propRootBone.LongName
+    RelationConstraintObjConfig.retPropSourceName = PickedObjects.propSource.LongName
+    RelationConstraintObjConfig.retOffsetName = PickedObjects.propOffsetMaker.LongName
+    RelationConstraintObjConfig.mocapCharBoneName = PickedObjects.mocapCharBone.LongName
+    RelationConstraintObjConfig.charBoneName = PickedObjects.charBone.LongName
 
 def create_relation_constraint():
-    create_retarget_markers("Test_Offset")
+    create_retarget_markers("Sword1")
     create_relation()
-    
-
-### testing funcs:
-#assign_prop_mocap(True)
-#create_retarget_markers("toDELETE")
 
 
 def BtnCallback(control, event):
     if control.Caption == "Set Objects":
-        #CreateSetterUI()
-        print(PickedObjects.mocapWrist.Name)
-        Setter.CreateTool()
+        CreateSetterUI()
+        #Setter.CreateTool()
     elif control.Caption == "Set Mocap":
         print("assigning mocap...")
         assign_prop_mocap(wireFrameBtn.State)
@@ -114,13 +126,13 @@ def SetupPropertyList(model):
 
 def EventContainerDblClick(control, event):
     SetupPropertyList(None)
-    
+
 def EventContainerDragAndDrop(control, event):
     if event.State == FBDragAndDropState.kFBDragAndDropDrag:
         event.Accept()
     elif event.State == FBDragAndDropState.kFBDragAndDropDrop:
         SetupPropertyList( event.Components[0] )
- 
+
 
 def CreateButton(caption):
     button = FBButton()
@@ -149,7 +161,6 @@ def CreateList(caption):
     textInput.Caption = caption
     textInput.OnChange.Add(BtnCallback)
     return textInput
-  
 
 def PopulateLayout_Stage_Main(mainLyt):
 
@@ -174,7 +185,7 @@ def PopulateLayout_Stage_Main(mainLyt):
 
     lyt = CreateLine("thirdRow", 90, mainLyt)
 
-    createBtn = CreateButton("Pre Retarget")
+    createBtn = CreateButton("Retarget")
     lyt.Add(createBtn,115)
 
     lyt = CreateLine("fourthRow", 125, mainLyt)
@@ -200,7 +211,6 @@ def CreateMainUI():
     PopulateLayout_Stage_Main(t)
     ShowTool(t)
 
-
 def PopulateLayout_Stage_Sett(mainLyt):
 
     #txt input:
@@ -220,3 +230,20 @@ def CreateSetterUI():
 
 
 CreateMainUI()
+
+
+def duplicate_rig_model(source_model, specifiedNamespace, parent=None):
+    # Clone the current model
+    clone = source_model.Clone()
+    if specifiedNamespace:
+        clone.LongName = str(specifiedNamespace) + clone.Name
+    
+    # Set the parent if specified
+    if parent:
+        clone.Parent = parent
+
+    # Recursively clone all children
+    for child in source_model.Children:
+        duplicate_rig_model(child, specifiedNamespace, clone)
+
+    return clone

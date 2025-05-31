@@ -1,21 +1,25 @@
-from pyfbsdk import FBFindModelByLabelName, FBConstraintRelation, FBConnect
+from pyfbsdk import FBFindObjectByFullName, FBConstraintRelation, FBConnect
 
-mocapPropName = "Mocap_Prop"
-propBoneName = "Root_Prop"
-retPropBoneName = "RetProp_Name"
-retOffsetName = "Offset"
-mocapCharBoneName = "RightFingerBase"
-charBoneName = "Aragor:RightHand"
+class RelationConstraintObjConfig:
+    
+    mocapPropName = ""
+    retPropBoneName = ""
+    retPropSourceName = ""
+    retOffsetName = ""
+    mocapCharBoneName = ""
+    charBoneName = ""
 
+    
 def define_objects():
-    mocapProp = FBFindModelByLabelName(mocapPropName)
-    propBone = FBFindModelByLabelName(propBoneName)
+    print(RelationConstraintObjConfig.mocapPropName)
+    mocapProp = FBFindObjectByFullName(RelationConstraintObjConfig.mocapPropName)
+    retPropBoneSource = FBFindObjectByFullName(RelationConstraintObjConfig.retPropSourceName)
 
-    retPropBone = FBFindModelByLabelName(retPropBoneName)
-    retOffset = FBFindModelByLabelName(retOffsetName)
+    retPropBone = FBFindObjectByFullName(RelationConstraintObjConfig.retPropBoneName)
+    retOffset = FBFindObjectByFullName(RelationConstraintObjConfig.retOffsetName)
 
-    mocapCharBone = FBFindModelByLabelName(mocapCharBoneName)
-    charBone= FBFindModelByLabelName(charBoneName)
+    mocapCharBone = FBFindObjectByFullName(RelationConstraintObjConfig.mocapCharBoneName)
+    charBone= FBFindObjectByFullName(RelationConstraintObjConfig.charBoneName)
 
     constrain = FBConstraintRelation("C_RelationProp")
     constrain.Active = True
@@ -23,10 +27,9 @@ def define_objects():
     mocapProp_BoxIn = constrain.SetAsSource(mocapProp)
     mocapCharBone_BoxIn = constrain.SetAsSource(mocapCharBone)
     charBone_BoxIn = constrain.SetAsSource(charBone)
-    #propBone_BoxIn = constrain.SetAsSource(propBone)
     retOffset_BoxIn = constrain.SetAsSource(retOffset)
 
-    retProp_BoxOut = constrain.ConstrainObject(propBone)
+    retProp_BoxOut = constrain.ConstrainObject(retPropBoneSource)
     retPropBone_BoxOut = constrain.ConstrainObject(retPropBone)
 
     addNodeBox_1 = constrain.CreateFunctionBox("Vector","Add (V1 + V2)")
@@ -50,17 +53,17 @@ def _connect_box(sourceBox, sourceNodeName, targetBox, targetNodeName):
         FBConnect(source_out, target_in)
 
 def connect_boxes(mocapProp_BoxIn, mocapCharBone_BoxIn, charBone_BoxIn, retOffset_BoxIn, retProp_BoxOut, retPropBone_BoxOut, addNodeBox_1, subNodeBox_2):
-    _connect_box(mocapProp_BoxIn, 'Rotation', retPropBone_BoxOut, 'Rotation')
+    _connect_box(mocapProp_BoxIn, 'Rotation', retProp_BoxOut, 'Rotation')
 
     _connect_box(mocapProp_BoxIn, 'Translation', subNodeBox_2, 'V1')
     _connect_box(mocapCharBone_BoxIn, 'Translation', subNodeBox_2, 'V2')
 
     _connect_box(subNodeBox_2, 'Result', addNodeBox_1, 'V1')
     _connect_box(charBone_BoxIn, 'Translation', addNodeBox_1, 'V2')
-    _connect_box(addNodeBox_1, 'Result', retPropBone_BoxOut, 'Translation')
+    _connect_box(addNodeBox_1, 'Result',retProp_BoxOut, 'Translation')
 
-    _connect_box(retOffset_BoxIn, 'Rotation', retProp_BoxOut, 'Rotation')
-    _connect_box(retOffset_BoxIn, 'Translation', retProp_BoxOut, 'Translation')
+    _connect_box(retOffset_BoxIn, 'Rotation',  retPropBone_BoxOut, 'Rotation')
+    _connect_box(retOffset_BoxIn, 'Translation',  retPropBone_BoxOut, 'Translation')
 
 
 
