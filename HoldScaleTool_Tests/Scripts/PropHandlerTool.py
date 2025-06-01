@@ -9,7 +9,7 @@ if script_dir not in sys.path:
 from pyfbsdk import *
 from pyfbsdk_additions import * 
 #from DeltaCorrect import apply_corrections
-from Setter import AssigneObjects, CreateSetterUI
+from Setter import CreateSetterUI
 from relation_constraint_configure import create_relation, RelationConstraintObjConfig
 
 
@@ -19,35 +19,33 @@ toolFullName = toolName + str(toolVersion)
 defNamespace = "ProH:"
 
 class PickedObjects:
-    mocapProp = FBFindModelByLabelName("Mocap_Prop")
+    #to be assigned
+    mocapProp = None
+    propRootBone = None
+    mocapCharBone = None
+    charBone =  None
 
-    propRootBone = FBFindModelByLabelName("Root_Prop")
-
-    mocapCharBone = FBFindModelByLabelName("RightFingerBase")
-    charBone = FBFindObjectByFullName("Aragor:RightHand")
-
-    #to create
+    #to be created
     propSource = None
     propOffsetMaker = None
     mocapPropRootClone = None
 
 def assign_prop_mocap(isWireFrameOn):
-    #LATTTEEEEEEEEEEEEEEEEEER
-    #check if namespace is already assigned
-    
-    newPropRig = duplicate_rig_model(PickedObjects.propRootBone, defNamespace, None)
-    #FIX: check if the name is in mocapProp.Children
-    if newPropRig in PickedObjects.mocapProp.Children:
-        print("Prop IS already assigned to mocap")
+    if _are_mocap_objs_set():
+        newPropRig = duplicate_rig_model(PickedObjects.propRootBone, defNamespace, None)
+        #FIX: check if the name is in mocapProp.Children
+        if newPropRig in PickedObjects.mocapProp.Children:
+            print("Prop IS already assigned to mocap")
+        else:
+            newPropRig.Parent = PickedObjects.mocapProp
+            newPropRig.Translation = FBVector3d(0,0,0)
+            newPropRig.Rotation = FBVector3d(0,0,0)
+            PickedObjects.mocapPropRootClone = newPropRig
+            PickedObjects.mocapProp = PickedObjects.mocapPropRootClone
+            
+        set_prop_visibility(isWireFrameOn)
     else:
-        newPropRig.Parent = PickedObjects.mocapProp
-        newPropRig.Translation = FBVector3d(0,0,0)
-        newPropRig.Rotation = FBVector3d(0,0,0)
-        PickedObjects.mocapPropRootClone = newPropRig
-        PickedObjects.mocapProp = PickedObjects.mocapPropRootClone
-        
-    set_prop_visibility(isWireFrameOn)
-
+        print("Assign objects first!")
 
 def set_prop_visibility(isWireFrameOn):
     if PickedObjects.mocapProp.Children[0]:
@@ -62,7 +60,6 @@ def create_retarget_markers(propname):
     propSource.MarkerSize = 200
     propSource.Color = FBColor(1, 0.5, 0)
     propSource.Look = FBMarkerLook.kFBMarkerLookLightCross
-    
 
     propOffsetMaker = FBModelMarker(defNamespace + "Offset_" + str(propname))
     propOffsetMaker.Show = True
@@ -81,6 +78,11 @@ def create_retarget_markers(propname):
     send_objects_to_relation_constraint()
 
 
+def _are_mocap_objs_set():
+    if PickedObjects.mocapProp is not None or PickedObjects.propRootBone is not None:
+        return True
+    return False
+
 def send_objects_to_relation_constraint():
     RelationConstraintObjConfig.mocapPropName = PickedObjects.mocapProp.LongName
     RelationConstraintObjConfig.retPropBoneName = PickedObjects.propRootBone.LongName
@@ -90,10 +92,9 @@ def send_objects_to_relation_constraint():
     RelationConstraintObjConfig.charBoneName = PickedObjects.charBone.LongName
 
 def create_relation_constraint():
-    create_retarget_markers("Sword1")
+    create_retarget_markers(inputPropName.Caption)
     create_relation()
-
-
+    
 def BtnCallback(control, event):
     if control.Caption == "Set Objects":
         CreateSetterUI()
@@ -188,6 +189,11 @@ def PopulateLayout_Stage_Main(mainLyt):
     createBtn = CreateButton("Retarget")
     lyt.Add(createBtn,115)
 
+    global inputPropName
+    inputPropName = FBEdit()
+    inputPropName.Caption = ""
+    lyt.Add(inputPropName, 75)
+
     lyt = CreateLine("fourthRow", 125, mainLyt)
 
     dotCorrectionBtn = CreateButton("DOT Correct")
@@ -210,24 +216,6 @@ def CreateMainUI():
     t.StartSizeY = 400
     PopulateLayout_Stage_Main(t)
     ShowTool(t)
-
-def PopulateLayout_Stage_Sett(mainLyt):
-
-    #txt input:
-    lyt = CreateLine("firstRow", 10, mainLyt)
-
-    container = FBVisualContainer()
-    container.OnDragAndDrop.Add(EventContainerDragAndDrop)
-    container.OnDblClick.Add(EventContainerDblClick)
-    lyt.Add(container, 100)
-
-def CreateSetterUI():
-    t = FBCreateUniqueTool("Set Objects")
-    t.StartSizeX = 150
-    t.StartSizeY = 75
-    PopulateLayout_Stage_Sett(t)
-    ShowTool(t)
-
 
 CreateMainUI()
 

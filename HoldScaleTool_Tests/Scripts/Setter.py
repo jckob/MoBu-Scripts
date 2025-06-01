@@ -1,6 +1,13 @@
-from pyfbsdk import *
-from pyfbsdk_additions import *
+import os
+import sys
 
+script_dir = os.path.dirname(__file__)
+if script_dir not in sys.path:
+    sys.path.append(script_dir)
+
+from pyfbsdk import FBPropertyFlag, FBDragAndDropState, FBVisualContainer, FBSystem, FBLabel,FBAddRegionParam, FBAttachType, FBSceneChangeType, ShowTool 
+from pyfbsdk_additions import FBCreateUniqueTool, FBVBoxLayout
+from PropHandlerTool import PickedObjects
 
 class AssigneObjects:
     mocapProp = None
@@ -10,7 +17,6 @@ class AssigneObjects:
 
 def SetupPropertyList(control, model):
     correctContainer = _get_container(control)
-    print(control.Caption)
     correctContainer.Items.removeAll()
     tool.prop_list = []
     
@@ -21,13 +27,9 @@ def SetupPropertyList(control, model):
         for p in model.PropertyList:
             if p and p.IsInternal() and not p.GetPropertyFlag(FBPropertyFlag.kFBPropertyFlagHideProperty):
                 tool.prop_list.append(p)
-        _get_pickedObj(control, model)
-
-def Show_Obj():
-    print(AssigneObjects.mocapProp)
-    print(AssigneObjects.propRootBone)
-    print(AssigneObjects.mocapCharBone.Name)
-    print(AssigneObjects.charBone.Name)
+        set_object(control, model)
+    else:
+        set_object(control, None)
 
 def _get_container(control):
     if control.Caption == "mocapProp":
@@ -40,7 +42,7 @@ def _get_container(control):
         return tool.container4
     return None
 
-def _get_pickedObj(control, pickedObj):
+def set_object(control, pickedObj):
     if control.Caption == "mocapProp":
         AssigneObjects.mocapProp = pickedObj
     elif control.Caption == "propRootBone":
@@ -49,8 +51,26 @@ def _get_pickedObj(control, pickedObj):
         AssigneObjects.mocapCharBone = pickedObj
     elif control.Caption == "charBone":
         AssigneObjects.charBone = pickedObj
-    return None
+    send_objects_to_MainTool()
+        
+def send_objects_to_MainTool():
+    if AssigneObjects.mocapProp is not None and AssigneObjects.propRootBone is not None:
+        PickedObjects.mocapProp = AssigneObjects.mocapProp
+        PickedObjects.propRootBone = AssigneObjects.propRootBone
+        print(PickedObjects.mocapProp.Name)
+        print(PickedObjects.propRootBone.Name)
+    else:
+        PickedObjects.mocapProp = None
+        PickedObjects.propRootBone = None
 
+
+    if AssigneObjects.mocapCharBone is not None and AssigneObjects.charBone is not None:
+        PickedObjects.mocapCharBone = AssigneObjects.mocapCharBone
+        PickedObjects.charBone = AssigneObjects.charBone
+    else:
+        PickedObjects.mocapCharBone = None
+        PickedObjects.charBone = None
+ 
 
 def EventContainerDblClick(control, event):
     SetupPropertyList(control, None)
@@ -62,13 +82,15 @@ def EventContainerDragAndDrop(control, event):
         SetupPropertyList( control, event.Components[0])
 
 def SceneChanged(scene, event):
-    if len(tool.container.Items) != 0 and \
-        event.Type == FBSceneChangeType.kFBSceneChangeDetach  and \
-        event.ChildComponent == tool.model:
-        SetupPropertyList(None, None)
+    for container in [tool.container1, tool.container2, tool.container3, tool.container4]:
+        if len(container.Items) != 0 and \
+            event.Type == FBSceneChangeType.kFBSceneChangeDetach  and \
+            event.ChildComponent == tool.model:
+            SetupPropertyList(None, None)
+
 
 def PopulateLayout(mainLyt):    
-    x = FBAddRegionParam(0,FBAttachType.kFBAttachLeft,"")
+    x = FBAddRegionParam(5,FBAttachType.kFBAttachLeft,"")
     y = FBAddRegionParam(0,FBAttachType.kFBAttachTop,"")
     w = FBAddRegionParam(0,FBAttachType.kFBAttachRight,"")
     h = FBAddRegionParam(25,FBAttachType.kFBAttachBottom,"")
@@ -77,7 +99,7 @@ def PopulateLayout(mainLyt):
     mainLyt.SetControl("main",vlyt)
     
     l = FBLabel()
-    l.Caption = "Drag and drop a model into the container. Double click to clear."
+    l.Caption = "Drag & Drop objects"
     vlyt.Add(l,30)
     
     tool.model = None
@@ -87,21 +109,18 @@ def PopulateLayout(mainLyt):
     tool.container1.Caption = "mocapProp"
     vlyt.Add(tool.container1,30)
 
-    tool.model = None
     tool.container2 = FBVisualContainer()
     tool.container2.OnDragAndDrop.Add(EventContainerDragAndDrop)
     tool.container2.OnDblClick.Add(EventContainerDblClick)
     tool.container2.Caption = "propRootBone"
     vlyt.Add(tool.container2,30)
 
-    tool.model = None
     tool.container3 = FBVisualContainer()
     tool.container3.OnDragAndDrop.Add(EventContainerDragAndDrop)
     tool.container3.OnDblClick.Add(EventContainerDblClick)
     tool.container3.Caption = "mocapCharBone"
     vlyt.Add(tool.container3,30)
 
-    tool.model = None
     tool.container4 = FBVisualContainer()
     tool.container4.OnDragAndDrop.Add(EventContainerDragAndDrop)
     tool.container4.OnDblClick.Add(EventContainerDblClick)
@@ -115,16 +134,19 @@ def PopulateLayout(mainLyt):
     tool.OnUnbind.Add(OnToolDestroy)
     
     
-def OnToolDestroy(control,event):
-    # Important: each time we run this script we need to remove
-    # the SceneChanged from the Scene else they will accumulate
-    FBSystem().Scene.OnChange.Remove(SceneChanged)
-            
+def OnToolDestroy(self, control, event):
+        print("destroyed")
+        FBSystem().Scene.OnChange.Remove(SceneChanged)
+
+
 def CreateSetterUI():
     global tool
     
     tool = FBCreateUniqueTool("Assign Objects")
-    tool.StartSizeX = 400
-    tool.StartSizeY = 400
+    tool.StartSizeX = 100
+    tool.StartSizeY = 220
     PopulateLayout(tool)
     ShowTool(tool)
+
+CreateSetterUI()
+
