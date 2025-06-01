@@ -9,17 +9,17 @@ class RelationConstraintObjConfig:
     mocapCharBoneName = ""
     charBoneName = ""
 
-    
+relationObjs = RelationConstraintObjConfig()
 def define_objects():
-    print(RelationConstraintObjConfig.mocapPropName)
-    mocapProp = FBFindObjectByFullName(RelationConstraintObjConfig.mocapPropName)
-    retPropBoneSource = FBFindObjectByFullName(RelationConstraintObjConfig.retPropSourceName)
+    print(relationObjs.mocapPropName)
+    mocapProp = FBFindObjectByFullName(relationObjs.mocapPropName)
+    retPropBoneSource = FBFindObjectByFullName(relationObjs.retPropSourceName)
 
-    retPropBone = FBFindObjectByFullName(RelationConstraintObjConfig.retPropBoneName)
-    retOffset = FBFindObjectByFullName(RelationConstraintObjConfig.retOffsetName)
+    retPropBone = FBFindObjectByFullName(relationObjs.retPropBoneName)
+    retOffset = FBFindObjectByFullName(relationObjs.retOffsetName)
 
-    mocapCharBone = FBFindObjectByFullName(RelationConstraintObjConfig.mocapCharBoneName)
-    charBone= FBFindObjectByFullName(RelationConstraintObjConfig.charBoneName)
+    mocapCharBone = FBFindObjectByFullName(relationObjs.mocapCharBoneName)
+    charBone= FBFindObjectByFullName(relationObjs.charBoneName)
 
     constrain = FBConstraintRelation("C_RelationProp")
     constrain.Active = True

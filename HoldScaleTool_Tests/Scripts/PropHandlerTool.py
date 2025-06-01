@@ -10,7 +10,7 @@ from pyfbsdk import *
 from pyfbsdk_additions import * 
 #from DeltaCorrect import apply_corrections
 from Setter import CreateSetterUI
-from relation_constraint_configure import create_relation, RelationConstraintObjConfig
+from relation_constraint_configure import create_relation, relationObjs
 
 
 toolName = "Prop Handler Tool  v"
@@ -30,29 +30,31 @@ class PickedObjects:
     propOffsetMaker = None
     mocapPropRootClone = None
 
+userObjs = PickedObjects()
 def assign_prop_mocap(isWireFrameOn):
     if _are_mocap_objs_set():
-        newPropRig = duplicate_rig_model(PickedObjects.propRootBone, defNamespace, None)
+        newPropRig = duplicate_rig_model(userObjs.propRootBone, defNamespace, None)
         #FIX: check if the name is in mocapProp.Children
-        if newPropRig in PickedObjects.mocapProp.Children:
+        if newPropRig in userObjs.mocapProp.Children:
             print("Prop IS already assigned to mocap")
         else:
-            newPropRig.Parent = PickedObjects.mocapProp
+            newPropRig.Parent = userObjs.mocapProp
             newPropRig.Translation = FBVector3d(0,0,0)
             newPropRig.Rotation = FBVector3d(0,0,0)
-            PickedObjects.mocapPropRootClone = newPropRig
-            PickedObjects.mocapProp = PickedObjects.mocapPropRootClone
+            userObjs.mocapPropRootClone = newPropRig
+            userObjs.mocapProp = userObjs.mocapPropRootClone
+            print("Made it :-)")
             
         set_prop_visibility(isWireFrameOn)
     else:
         print("Assign objects first!")
 
 def set_prop_visibility(isWireFrameOn):
-    if PickedObjects.mocapProp.Children[0]:
+    if userObjs.mocapProp.Children[0]:
         if isWireFrameOn:
-            PickedObjects.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
+            userObjs.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
         else:
-            PickedObjects.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
+            userObjs.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
 
 def create_retarget_markers(propname):
     propSource = FBModelMarker(defNamespace + str(propname))
@@ -67,11 +69,11 @@ def create_retarget_markers(propname):
     propOffsetMaker.Color = FBColor(1, 1, 0)
     propOffsetMaker.Look = FBMarkerLook.kFBMarkerLookCircle
     
-    PickedObjects.propSource = propSource
-    PickedObjects.propOffsetMaker = propOffsetMaker
+    userObjs.propSource = propSource
+    userObjs.propOffsetMaker = propOffsetMaker
 
     propOffsetMaker.Parent = propSource
-    #propSource.Parent = PickedObjects.charBone
+    #propSource.Parent = userObjs.charBone
 
     propSource.Translation = FBVector3d(0,0,0)
     propSource.Rotation = FBVector3d(0,0,0)
@@ -79,17 +81,17 @@ def create_retarget_markers(propname):
 
 
 def _are_mocap_objs_set():
-    if PickedObjects.mocapProp is not None or PickedObjects.propRootBone is not None:
+    if userObjs.mocapProp is not None and userObjs.propRootBone is not None :
         return True
     return False
 
 def send_objects_to_relation_constraint():
-    RelationConstraintObjConfig.mocapPropName = PickedObjects.mocapProp.LongName
-    RelationConstraintObjConfig.retPropBoneName = PickedObjects.propRootBone.LongName
-    RelationConstraintObjConfig.retPropSourceName = PickedObjects.propSource.LongName
-    RelationConstraintObjConfig.retOffsetName = PickedObjects.propOffsetMaker.LongName
-    RelationConstraintObjConfig.mocapCharBoneName = PickedObjects.mocapCharBone.LongName
-    RelationConstraintObjConfig.charBoneName = PickedObjects.charBone.LongName
+    relationObjs.mocapPropName = userObjs.mocapProp.LongName
+    relationObjs.retPropBoneName = userObjs.propRootBone.LongName
+    relationObjs.retPropSourceName = userObjs.propSource.LongName
+    relationObjs.retOffsetName = userObjs.propOffsetMaker.LongName
+    relationObjs.mocapCharBoneName = userObjs.mocapCharBone.LongName
+    relationObjs.charBoneName = userObjs.charBone.LongName
 
 def create_relation_constraint():
     create_retarget_markers(inputPropName.Caption)

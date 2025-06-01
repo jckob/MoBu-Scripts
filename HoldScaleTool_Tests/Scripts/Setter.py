@@ -5,16 +5,20 @@ script_dir = os.path.dirname(__file__)
 if script_dir not in sys.path:
     sys.path.append(script_dir)
 
-from pyfbsdk import FBPropertyFlag, FBDragAndDropState, FBVisualContainer, FBSystem, FBLabel,FBAddRegionParam, FBAttachType, FBSceneChangeType, ShowTool 
-from pyfbsdk_additions import FBCreateUniqueTool, FBVBoxLayout
-from PropHandlerTool import PickedObjects
+from pyfbsdk import * 
+from pyfbsdk_additions import *
+from PropHandlerTool import userObjs
 
-class AssigneObjects:
+class SendingObjects:
     mocapProp = None
     propRootBone = None
     mocapCharBone = None
     charBone = None
 
+
+assignedObj = SendingObjects()
+
+print(assignedObj.mocapCharBone)
 def SetupPropertyList(control, model):
     correctContainer = _get_container(control)
     correctContainer.Items.removeAll()
@@ -44,32 +48,32 @@ def _get_container(control):
 
 def set_object(control, pickedObj):
     if control.Caption == "mocapProp":
-        AssigneObjects.mocapProp = pickedObj
+        assignedObj.mocapProp = pickedObj
     elif control.Caption == "propRootBone":
-        AssigneObjects.propRootBone = pickedObj
+        assignedObj.propRootBone = pickedObj
     elif control.Caption == "mocapCharBone":
-        AssigneObjects.mocapCharBone = pickedObj
+        assignedObj.mocapCharBone = pickedObj
     elif control.Caption == "charBone":
-        AssigneObjects.charBone = pickedObj
+        assignedObj.charBone = pickedObj
     send_objects_to_MainTool()
         
 def send_objects_to_MainTool():
-    if AssigneObjects.mocapProp is not None and AssigneObjects.propRootBone is not None:
-        PickedObjects.mocapProp = AssigneObjects.mocapProp
-        PickedObjects.propRootBone = AssigneObjects.propRootBone
-        print(PickedObjects.mocapProp.Name)
-        print(PickedObjects.propRootBone.Name)
+    if assignedObj.mocapProp is not None and assignedObj.propRootBone is not None:
+        userObjs.mocapProp = assignedObj.mocapProp
+        userObjs.propRootBone = assignedObj.propRootBone
+        print("SET_M READY")
     else:
-        PickedObjects.mocapProp = None
-        PickedObjects.propRootBone = None
+        userObjs.mocapProp = None
+        userObjs.propRootBone = None
 
 
-    if AssigneObjects.mocapCharBone is not None and AssigneObjects.charBone is not None:
-        PickedObjects.mocapCharBone = AssigneObjects.mocapCharBone
-        PickedObjects.charBone = AssigneObjects.charBone
+    if assignedObj.mocapCharBone is not None and assignedObj.charBone is not None:
+        userObjs.mocapCharBone = assignedObj.mocapCharBone
+        userObjs.charBone = assignedObj.charBone
+        print("ALL READY")
     else:
-        PickedObjects.mocapCharBone = None
-        PickedObjects.charBone = None
+        userObjs.mocapCharBone = None
+        userObjs.charBone = None
  
 
 def EventContainerDblClick(control, event):
@@ -148,5 +152,4 @@ def CreateSetterUI():
     PopulateLayout(tool)
     ShowTool(tool)
 
-CreateSetterUI()
 
