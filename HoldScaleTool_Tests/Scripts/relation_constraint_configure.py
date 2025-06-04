@@ -1,36 +1,28 @@
-from pyfbsdk import FBFindObjectByFullName, FBConstraintRelation, FBConnect
+from pyfbsdk import FBConstraintRelation, FBConnect
 
 class RelationConstraintObjConfig:
-    
-    mocapPropName = ""
-    retPropBoneName = ""
-    retPropSourceName = ""
-    retOffsetName = ""
-    mocapCharBoneName = ""
-    charBoneName = ""
+
+    mocapProp = None
+    retPropBone = None
+    retPropSource = None
+    retOffset = None
+    mocapCharBone= None
+    charBone = None
+
+    #mocapProp = None
 
 relationObjs = RelationConstraintObjConfig()
 def define_objects():
-    print(relationObjs.mocapPropName)
-    mocapProp = FBFindObjectByFullName(relationObjs.mocapPropName)
-    retPropBoneSource = FBFindObjectByFullName(relationObjs.retPropSourceName)
-
-    retPropBone = FBFindObjectByFullName(relationObjs.retPropBoneName)
-    retOffset = FBFindObjectByFullName(relationObjs.retOffsetName)
-
-    mocapCharBone = FBFindObjectByFullName(relationObjs.mocapCharBoneName)
-    charBone= FBFindObjectByFullName(relationObjs.charBoneName)
-
     constrain = FBConstraintRelation("C_RelationProp")
     constrain.Active = True
 
-    mocapProp_BoxIn = constrain.SetAsSource(mocapProp)
-    mocapCharBone_BoxIn = constrain.SetAsSource(mocapCharBone)
-    charBone_BoxIn = constrain.SetAsSource(charBone)
-    retOffset_BoxIn = constrain.SetAsSource(retOffset)
+    mocapProp_BoxIn = constrain.SetAsSource(relationObjs.mocapProp)
+    mocapCharBone_BoxIn = constrain.SetAsSource(relationObjs.mocapCharBone)
+    charBone_BoxIn = constrain.SetAsSource(relationObjs.charBone)
+    retOffset_BoxIn = constrain.SetAsSource(relationObjs.retOffset)
 
-    retProp_BoxOut = constrain.ConstrainObject(retPropBoneSource)
-    retPropBone_BoxOut = constrain.ConstrainObject(retPropBone)
+    retProp_BoxOut = constrain.ConstrainObject(relationObjs.retPropSource)
+    retPropBone_BoxOut = constrain.ConstrainObject(relationObjs.retPropBone)
 
     addNodeBox_1 = constrain.CreateFunctionBox("Vector","Add (V1 + V2)")
     subNodeBox_2 = constrain.CreateFunctionBox("Vector","Subtract (V1 - V2)")
@@ -71,5 +63,3 @@ def connect_boxes(mocapProp_BoxIn, mocapCharBone_BoxIn, charBone_BoxIn, retOffse
 def create_relation():
     mocapProp_BoxIn, mocapCharBone_BoxIn, charBone_BoxIn, retOffset_BoxIn, retProp_BoxOut, retPropBone_BoxOut, addNodeBox_1, subNodeBox_2 = define_objects()
     connect_boxes(mocapProp_BoxIn, mocapCharBone_BoxIn, charBone_BoxIn, retOffset_BoxIn, retProp_BoxOut, retPropBone_BoxOut, addNodeBox_1, subNodeBox_2)
-
-# This script defines a constraint relation in MotionBuilder to connect various objects and their transformations.

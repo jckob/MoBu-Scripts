@@ -40,6 +40,8 @@ class UILockObjs():
     locker3 = None
     locker4 = None
 
+    visibilityBtn = None
+
     lockImage  = str(script_dir + "/Locked_Image.png")
     unlockImage = str(script_dir + "/unLocked_Image.png")
 
@@ -104,17 +106,20 @@ def assign_prop_mocap(isWireFrameOn):
             userObjs.mocapPropRootClone = newPropRig
             userObjs.mocapProp = userObjs.mocapPropRootClone
             print("Made it :-)")
-            
         set_prop_visibility(userObjs.mocapProp.Children[0].ShadingMode == FBModelShadingMode.kFBModelShadingWire)
     else:
         print("2 first objs are not set")
         
 def set_prop_visibility(isWireFrameOn):
-    if userObjs.mocapProp.Children[0]:
-        if not isWireFrameOn:
-            userObjs.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
-        else:
-            userObjs.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
+    try:
+        if userObjs.mocapProp.Children[0]:
+            if not isWireFrameOn:
+                userObjs.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
+            else:
+                userObjs.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
+    except:
+        uiLockers.visibilityBtn.State = 0
+            
 
 def create_retarget_markers(propname):
     propSource = FBModelMarker(defNamespace + str(propname))
@@ -137,7 +142,6 @@ def create_retarget_markers(propname):
 
     propSource.Translation = FBVector3d(0,0,0)
     propSource.Rotation = FBVector3d(0,0,0)
-    send_objects_to_relation_constraint()
 
 def _are_mocap_objs_set():
     if uiLockers.locker1.State & uiLockers.locker2.State: 
@@ -161,6 +165,7 @@ def send_objects_to_relation_constraint():
 def create_relation_constraint():
     if _are_hands_objs_set():
         create_retarget_markers(inputPropName.Caption)
+        send_objects_to_relation_constraint()
         create_relation()
     else:
         print("no hands set in")
@@ -275,6 +280,7 @@ def PopulateLayout_Stage_Main(mainLyt):
     wireFrameBtn.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.6, 0.4, 0.4))
     wireFrameBtn.State = 0
     lyt.Add(wireFrameBtn,75)
+    uiLockers.visibilityBtn = wireFrameBtn
 
 
     lyt = CreateLine("thirdRow", 75, mainLyt)

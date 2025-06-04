@@ -81,11 +81,9 @@ def send_objects_to_MainTool():
  
 
 def EventContainerDblClick(control, event):
-    print("2click")
     SetupPropertyList(control, None)
     
 def EventContainerDragAndDrop(control, event):
-    print("dragged")
     if event.State == FBDragAndDropState.kFBDragAndDropDrag:
         event.Accept()
     elif event.State == FBDragAndDropState.kFBDragAndDropDrop:
@@ -151,7 +149,7 @@ def PopulateLayout(mainLyt):
 
 def CreateSetterUI():
     global tool
-    
+
     tool = FBCreateUniqueTool("Assign Objects")
     tool.StartSizeX = 100
     tool.StartSizeY = 220
