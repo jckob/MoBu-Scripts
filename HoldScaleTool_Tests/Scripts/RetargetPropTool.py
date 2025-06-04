@@ -16,6 +16,7 @@ toolVersion = 0.3
 toolFullName = toolName + str(toolVersion)
 defNamespace = "ProH:"
 
+
 class PickedObjects:
     #to be assigned
     mocapProp = None
@@ -29,86 +30,66 @@ class PickedObjects:
     mocapPropRootClone = None
 
 class UILockObjs():
-    lyt1 = None
-    lyt2 = None
-    lyt3 = None
-    lyt4 = None
-
     input1 = None
-    txt1 = None
     input2 = None
-    txt2 = None
     input3 = None
-    txt3 = None
     input4 = None
-    txt4 = None
 
     locker1 = None
     locker2 = None
     locker3 = None
     locker4 = None
 
-    def set_obj_as_picked(self, obj_Indx):
+    lockImage  = str(script_dir + "/Locked_Image.png")
+    unlockImage = str(script_dir + "/unLocked_Image.png")
+
+    def match_id_to_containerClass(self, obj_Indx, objSource):
+        match int(obj_Indx):
+            case 1:
+                userObjs.mocapProp = objSource
+            case 2:
+                userObjs.propRootBone = objSource
+            case 3:
+                userObjs.mocapCharBone = objSource
+            case 4:
+                userObjs.charBone = objSource
+
+
+    def manage_obj_locking(self, obj_Indx):
         inputUI = getattr(self, f"input{obj_Indx}")
-        objName = str(inputUI.Text)
-        if objName:
-            try:
-                foundObj = FBFindObjectByFullName(objName)
-            except:
-                print("no obj")
-            if foundObj:
-                match obj_Indx:
-                    case 1:
-                        userObjs.mocapProp = foundObj
-                    case 2:
-                        userObjs.propRootBone = foundObj
-                    case 3:
-                        userObjs.mocapCharBone = foundObj
-                    case 4:
-                        userObjs.charBone = foundObj
-                self.change_input_to_text(obj_Indx)
-                return
-            else:
-                print("error")
-                self.change_checkBox_to_failed(obj_Indx)
-        else:
+        self.set_obj_as_picked(obj_Indx, str(inputUI.Text))
+
+    def set_obj_as_picked(self, obj_Indx, obj_Name ):
+        try:
+            foundObj = FBFindModelByLabelName(obj_Name)
+        except:
+            foundObj = None
+
+        if not foundObj:
             self.change_checkBox_to_failed(obj_Indx)
+            print("None")
 
-
-
-    def change_input_to_text(self, object_RowPlaced):
-        lyt = getattr(self, f"lyt{object_RowPlaced}")
-        input_field = getattr(self, f"input{object_RowPlaced}")
-        txt_field = getattr(self, f"txt{object_RowPlaced}")
-        locker = getattr(self, f"locker{object_RowPlaced}")
-
-        txt_field.Text = "FUCCCCCK"
-        input_field.Visible = False
-        txt_field.Visible = True
-        print(txt_field.Text)
-        #lyt.Remove(locker)
-        #lyt.Add(txt_field, 60)
-        
-    def change_text_to_input(self, object_RowPlaced):
-        lyt = getattr(self, f"lyt{object_RowPlaced}")
-        input_field = getattr(self, f"input{object_RowPlaced}")
-        txt_field = getattr(self, f"txt{object_RowPlaced}")
-
-        input_field.Caption = txt_field.Text
-        txt_field.Visible(txt_field)
-        lyt.Add(input_field, 60)
+        self.match_id_to_containerClass(obj_Indx, foundObj)
 
     def change_checkBox_to_failed(self, object_RowPlaced):
         locker = getattr(self, f"locker{object_RowPlaced}")
         locker.State = False
 
     def check_is_locked(self, obj_Indx):
-        locker = getattr(uiCheckBoxes, f"locker{obj_Indx}")
+        locker = getattr(uiLockers, f"locker{obj_Indx}")
         if locker.State:
-            print("NOW locked")
-            self.set_obj_as_picked(obj_Indx)
+            self.manage_obj_locking(obj_Indx)
         else:
-            self.change_text_to_input(obj_Indx)
+            self.on_edit_input(obj_Indx)
+        
+    def on_edit_input(self, obj_Indx):
+        self.change_checkBox_to_failed(obj_Indx)
+        self.match_id_to_containerClass(obj_Indx, None)
+            
+class StatusTxtObj():
+    row1Info = None
+    row2Info = None
+
 
 def assign_prop_mocap(isWireFrameOn):
     if _are_mocap_objs_set():
@@ -124,14 +105,13 @@ def assign_prop_mocap(isWireFrameOn):
             userObjs.mocapProp = userObjs.mocapPropRootClone
             print("Made it :-)")
             
-        set_prop_visibility(isWireFrameOn)
+        set_prop_visibility(userObjs.mocapProp.Children[0].ShadingMode == FBModelShadingMode.kFBModelShadingWire)
     else:
-        print("no")
+        print("2 first objs are not set")
         
-
 def set_prop_visibility(isWireFrameOn):
     if userObjs.mocapProp.Children[0]:
-        if isWireFrameOn:
+        if not isWireFrameOn:
             userObjs.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
         else:
             userObjs.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
@@ -159,13 +139,16 @@ def create_retarget_markers(propname):
     propSource.Rotation = FBVector3d(0,0,0)
     send_objects_to_relation_constraint()
 
-
 def _are_mocap_objs_set():
-    uiCheckBoxes.change_checkBox_to_failed()
-    if uiCheckBoxes.locker1.State and uiCheckBoxes.locker2.State:
-        return False
+    if uiLockers.locker1.State & uiLockers.locker2.State: 
+        if userObjs.mocapProp is not None and userObjs.propRootBone is not None :
+            return True
     return False
-    
+
+def _are_hands_objs_set():
+    if userObjs.mocapCharBone is not None and userObjs.charBone is not None :
+        return True
+    return False
 
 def send_objects_to_relation_constraint():
     relationObjs.mocapPropName = userObjs.mocapProp.LongName
@@ -176,8 +159,11 @@ def send_objects_to_relation_constraint():
     relationObjs.charBoneName = userObjs.charBone.LongName
 
 def create_relation_constraint():
-    create_retarget_markers(inputPropName.Caption)
-    create_relation()
+    if _are_hands_objs_set():
+        create_retarget_markers(inputPropName.Caption)
+        create_relation()
+    else:
+        print("no hands set in")
     
 def BtnCallback(control, event):
     if control.Caption == "Set Objects":
@@ -190,19 +176,12 @@ def BtnCallback(control, event):
         set_prop_visibility(wireFrameBtn.State)
     elif control.Caption == "Retarget":
         create_relation_constraint()
-    elif control.Caption == "lock1":
-        uiCheckBoxes.check_is_locked(1)
-    elif control.Caption == "lock2":
-        uiCheckBoxes.check_is_locked(2)
-    elif control.Caption == "lock3":
-        uiCheckBoxes.check_is_locked(3)
-    elif control.Caption == "lock4":
-        uiCheckBoxes.check_is_locked(4)
-
 
 def EditedInput(control, event):
-    print(control.input_id)
-    uiCheckBoxes.check_is_locked(control.input_id)
+    uiLockers.on_edit_input(control.input_id)
+
+def LockingCheckboxes(control, event):
+    uiLockers.check_is_locked(control.btnLock_id)
 
 
 def CreateButton(caption):
@@ -215,6 +194,7 @@ def CreateButton(caption):
 def CreateText(text):
     emptySpace = FBLabel()
     emptySpace.Caption = text
+    emptySpace.Justify = FBTextJustify.kFBTextJustifyCenter
     return emptySpace
 
 def CreateInput(text):
@@ -229,13 +209,14 @@ def CreateInputObjName(indx):
     inputTxt.OnChange.Add(EditedInput)
     return inputTxt
     
-
 def CreateLockBox(text):
     checkBtn = FBButton()
-    checkBtn.Caption = text
-    checkBtn.Style = FBButtonStyle.kFBCheckbox 
-    checkBtn.Justify = FBTextJustify.kFBTextJustifyCenter
-    checkBtn.OnClick.Add(BtnCallback)
+    checkBtn.Style = FBButtonStyle.kFBCheckbox
+    #checkBtn.Style = FBButtonStyle.kFBBitmapButton
+    checkBtn.SetImageFileNames(uiLockers.unlockImage, uiLockers.lockImage)
+
+    checkBtn.btnLock_id = text[-1]
+    checkBtn.OnClick.Add(LockingCheckboxes)
     return checkBtn
 
 def CreateLine(name, height, mainLyt):
@@ -265,6 +246,22 @@ def CreateList(caption):
     return textInput
 
 def PopulateLayout_Stage_Main(mainLyt):
+    lyt = CreateLine("statusRow_1", 5, mainLyt)
+    space = CreateText("")
+    lyt.Add(space,50)
+    
+    txtStatus1 = CreateText("status...")
+    lyt.Add(txtStatus1,115)
+    txtStatusObjs.row1Info = txtStatus1
+
+    lyt = CreateLine2Column("statusRow_2", 5, mainLyt)
+    space = CreateText("")
+    lyt.Add(space,50)
+    
+    txtStatus2 = CreateText("Type name Objs 🠋")
+    lyt.Add(txtStatus2,115)
+    txtStatusObjs.row2Info = txtStatus2
+
 
     lyt = CreateLine("firstRow", 40, mainLyt)
 
@@ -276,6 +273,7 @@ def PopulateLayout_Stage_Main(mainLyt):
     wireFrameBtn.Style = FBButtonStyle.kFB2States
     wireFrameBtn.Look = FBButtonLook.kFBLookColorChange
     wireFrameBtn.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.6, 0.4, 0.4))
+    wireFrameBtn.State = 0
     lyt.Add(wireFrameBtn,75)
 
 
@@ -304,63 +302,49 @@ def PopulateLayout_Stage_Main(mainLyt):
     lyt.Add(lastTaskText, 120)
 
     #2Column:
-    lyt = CreateLine2Column("2column_1",30, mainLyt)
+    lyt = CreateLine2Column("2column_1",40, mainLyt)
     
     mocapPropTxt = CreateText("Mocap Prop Name:")
     lyt.Add(mocapPropTxt, 100)
-
     mocapPropInput = CreateInputObjName(1)
     lyt.Add(mocapPropInput, 95)
-    mocapPropTxt = CreateText("")
-    lyt.Add(mocapPropTxt,95)
-    mocapPropTxt.Visible = False
-
     lockBox1 = CreateLockBox("lock1")
-    lyt.Add(lockBox1, 50)
+    lyt.Add(lockBox1, 30)
     
-
-    uiCheckBoxes.lyt1 = lyt
-    uiCheckBoxes.input1 = mocapPropInput
-    uiCheckBoxes.txt1 = mocapPropTxt
-    uiCheckBoxes.locker1 = lockBox1
+    uiLockers.lyt1 = lyt
+    uiLockers.input1 = mocapPropInput
+    uiLockers.locker1 = lockBox1
 
 
-    lyt = CreateLine2Column("2column_2",60, mainLyt)
-    
+    lyt = CreateLine2Column("2column_2",70, mainLyt)
+
     propRootBoneTxt = CreateText("Prop Root Bone:")
     lyt.Add(propRootBoneTxt, 100)
     
     propRootBoneInput = CreateInputObjName(2)
     lyt.Add(propRootBoneInput, 95)
-    propRootBoneTxt = CreateText("")
-
     lockBox2 = CreateLockBox("lock2")
-    lyt.Add(lockBox2, 50)
+    lyt.Add(lockBox2, 30)
 
-    uiCheckBoxes.lyt2 = lyt
-    uiCheckBoxes.input2 = propRootBoneInput
-    uiCheckBoxes.txt2 = propRootBoneTxt
-    uiCheckBoxes.locker2 = lockBox2
+    uiLockers.lyt2 = lyt
+    uiLockers.input2 = propRootBoneInput
+    uiLockers.locker2 = lockBox2
 
-    lyt = CreateLine2Column("2column_3",90, mainLyt)
+    lyt = CreateLine2Column("2column_3",100, mainLyt)
     
     mocapCharBoneTxt = CreateText("Mocap Char Bone:")
     lyt.Add(mocapCharBoneTxt, 100)
-
     mocapCharBoneInput = CreateInputObjName(3)
     lyt.Add(mocapCharBoneInput, 95)
-    mocapCharBoneTxt = CreateText("")
-    
     lockBox3 = CreateLockBox("lock3")
-    lyt.Add(lockBox3, 50)
+    lyt.Add(lockBox3, 30)
     
-    uiCheckBoxes.lyt3 = lyt
-    uiCheckBoxes.input3 = mocapCharBoneInput
-    uiCheckBoxes.txt3 = mocapCharBoneTxt
-    uiCheckBoxes.locker3 = lockBox3
+    uiLockers.lyt3 = lyt
+    uiLockers.input3 = mocapCharBoneInput
+    uiLockers.locker3 = lockBox3
 
 
-    lyt = CreateLine2Column("2column_4",120, mainLyt)
+    lyt = CreateLine2Column("2column_4",130, mainLyt)
     
     charBoneTxt = CreateText("Char Bone:")
     lyt.Add(charBoneTxt, 100)
@@ -368,28 +352,26 @@ def PopulateLayout_Stage_Main(mainLyt):
     
     charBoneInput = CreateInputObjName(4)
     lyt.Add(charBoneInput, 95)
-    charBoneTxt = CreateText("")
-
     lockBox4 = CreateLockBox("lock4")
-    lyt.Add(lockBox4, 50)
+    lyt.Add(lockBox4, 30)
 
-    uiCheckBoxes.lyt4 = lyt
-    uiCheckBoxes.input4 = charBoneInput
-    uiCheckBoxes.txt4 = charBoneTxt
-    uiCheckBoxes.locker4 = lockBox4
+    uiLockers.lyt4 = lyt
+    uiLockers.input4 = charBoneInput
+    uiLockers.locker4 = lockBox4
 
 
 def CreateMainUI():
     global toolFullName
     t = FBCreateUniqueTool(toolFullName)
-    t.StartSizeX = 477  
+    t.StartSizeX = 500  
     t.StartSizeY = 230
     PopulateLayout_Stage_Main(t)
     ShowTool(t)
 
 
 userObjs = PickedObjects()
-uiCheckBoxes = UILockObjs()
+uiLockers = UILockObjs()
+txtStatusObjs = StatusTxtObj()
 CreateMainUI()
 
 
