@@ -1,0 +1,418 @@
+import os
+import sys
+
+# Add the current script directory to sys.path
+script_dir = os.path.dirname(__file__)
+if script_dir not in sys.path:
+    sys.path.append(script_dir)
+
+from pyfbsdk import *
+from pyfbsdk_additions import * 
+from relation_constraint_configure import create_relation, relationObjs
+
+
+toolName = "Retarget Prop Tool  v"
+toolVersion = 0.3
+toolFullName = toolName + str(toolVersion)
+defNamespace = "ProH:"
+
+class PickedObjects:
+    #to be assigned
+    mocapProp = None
+    propRootBone = None
+    mocapCharBone = None
+    charBone =  None
+
+    #to be created
+    propSource = None
+    propOffsetMaker = None
+    mocapPropRootClone = None
+
+class UILockObjs():
+    lyt1 = None
+    lyt2 = None
+    lyt3 = None
+    lyt4 = None
+
+    input1 = None
+    txt1 = None
+    input2 = None
+    txt2 = None
+    input3 = None
+    txt3 = None
+    input4 = None
+    txt4 = None
+
+    locker1 = None
+    locker2 = None
+    locker3 = None
+    locker4 = None
+
+    def set_obj_as_picked(self, obj_Indx):
+        inputUI = getattr(self, f"input{obj_Indx}")
+        objName = str(inputUI.Text)
+        if objName:
+            try:
+                foundObj = FBFindObjectByFullName(objName)
+            except:
+                print("no obj")
+            if foundObj:
+                match obj_Indx:
+                    case 1:
+                        userObjs.mocapProp = foundObj
+                    case 2:
+                        userObjs.propRootBone = foundObj
+                    case 3:
+                        userObjs.mocapCharBone = foundObj
+                    case 4:
+                        userObjs.charBone = foundObj
+                self.change_input_to_text(obj_Indx)
+                return
+            else:
+                print("error")
+                self.change_checkBox_to_failed(obj_Indx)
+        else:
+            self.change_checkBox_to_failed(obj_Indx)
+
+
+
+    def change_input_to_text(self, object_RowPlaced):
+        lyt = getattr(self, f"lyt{object_RowPlaced}")
+        input_field = getattr(self, f"input{object_RowPlaced}")
+        txt_field = getattr(self, f"txt{object_RowPlaced}")
+        locker = getattr(self, f"locker{object_RowPlaced}")
+
+        txt_field.Text = "FUCCCCCK"
+        input_field.Visible = False
+        txt_field.Visible = True
+        print(txt_field.Text)
+        #lyt.Remove(locker)
+        #lyt.Add(txt_field, 60)
+        
+    def change_text_to_input(self, object_RowPlaced):
+        lyt = getattr(self, f"lyt{object_RowPlaced}")
+        input_field = getattr(self, f"input{object_RowPlaced}")
+        txt_field = getattr(self, f"txt{object_RowPlaced}")
+
+        input_field.Caption = txt_field.Text
+        txt_field.Visible(txt_field)
+        lyt.Add(input_field, 60)
+
+    def change_checkBox_to_failed(self, object_RowPlaced):
+        locker = getattr(self, f"locker{object_RowPlaced}")
+        locker.State = False
+
+    def check_is_locked(self, obj_Indx):
+        locker = getattr(uiCheckBoxes, f"locker{obj_Indx}")
+        if locker.State:
+            print("NOW locked")
+            self.set_obj_as_picked(obj_Indx)
+        else:
+            self.change_text_to_input(obj_Indx)
+
+def assign_prop_mocap(isWireFrameOn):
+    if _are_mocap_objs_set():
+        newPropRig = duplicate_rig_model(userObjs.propRootBone, defNamespace, None)
+        #FIX: check if the name is in mocapProp.Children
+        if newPropRig in userObjs.mocapProp.Children:
+            print("Prop IS already assigned to mocap")
+        else:
+            newPropRig.Parent = userObjs.mocapProp
+            newPropRig.Translation = FBVector3d(0,0,0)
+            newPropRig.Rotation = FBVector3d(0,0,0)
+            userObjs.mocapPropRootClone = newPropRig
+            userObjs.mocapProp = userObjs.mocapPropRootClone
+            print("Made it :-)")
+            
+        set_prop_visibility(isWireFrameOn)
+    else:
+        print("no")
+        
+
+def set_prop_visibility(isWireFrameOn):
+    if userObjs.mocapProp.Children[0]:
+        if isWireFrameOn:
+            userObjs.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingWire
+        else:
+            userObjs.mocapProp.Children[0].ShadingMode = FBModelShadingMode.kFBModelShadingAll
+
+def create_retarget_markers(propname):
+    propSource = FBModelMarker(defNamespace + str(propname))
+    propSource.Show = True
+    propSource.MarkerSize = 200
+    propSource.Color = FBColor(1, 0.5, 0)
+    propSource.Look = FBMarkerLook.kFBMarkerLookLightCross
+
+    propOffsetMaker = FBModelMarker(defNamespace + "Offset_" + str(propname))
+    propOffsetMaker.Show = True
+    propOffsetMaker.MarkerSize = 400
+    propOffsetMaker.Color = FBColor(1, 1, 0)
+    propOffsetMaker.Look = FBMarkerLook.kFBMarkerLookCircle
+    
+    userObjs.propSource = propSource
+    userObjs.propOffsetMaker = propOffsetMaker
+
+    propOffsetMaker.Parent = propSource
+    #propSource.Parent = userObjs.charBone
+
+    propSource.Translation = FBVector3d(0,0,0)
+    propSource.Rotation = FBVector3d(0,0,0)
+    send_objects_to_relation_constraint()
+
+
+def _are_mocap_objs_set():
+    uiCheckBoxes.change_checkBox_to_failed()
+    if uiCheckBoxes.locker1.State and uiCheckBoxes.locker2.State:
+        return False
+    return False
+    
+
+def send_objects_to_relation_constraint():
+    relationObjs.mocapPropName = userObjs.mocapProp.LongName
+    relationObjs.retPropBoneName = userObjs.propRootBone.LongName
+    relationObjs.retPropSourceName = userObjs.propSource.LongName
+    relationObjs.retOffsetName = userObjs.propOffsetMaker.LongName
+    relationObjs.mocapCharBoneName = userObjs.mocapCharBone.LongName
+    relationObjs.charBoneName = userObjs.charBone.LongName
+
+def create_relation_constraint():
+    create_retarget_markers(inputPropName.Caption)
+    create_relation()
+    
+def BtnCallback(control, event):
+    if control.Caption == "Set Objects":
+        #CreateSetterUI()
+        print("createUI")
+    elif control.Caption == "Set Mocap":
+        print("assigning mocap...")
+        assign_prop_mocap(wireFrameBtn.State)
+    elif control.Caption == "Prop Vis":
+        set_prop_visibility(wireFrameBtn.State)
+    elif control.Caption == "Retarget":
+        create_relation_constraint()
+    elif control.Caption == "lock1":
+        uiCheckBoxes.check_is_locked(1)
+    elif control.Caption == "lock2":
+        uiCheckBoxes.check_is_locked(2)
+    elif control.Caption == "lock3":
+        uiCheckBoxes.check_is_locked(3)
+    elif control.Caption == "lock4":
+        uiCheckBoxes.check_is_locked(4)
+
+
+def EditedInput(control, event):
+    print(control.input_id)
+    uiCheckBoxes.check_is_locked(control.input_id)
+
+
+def CreateButton(caption):
+    button = FBButton()
+    button.Caption = str(caption)
+    button.Justify = FBTextJustify.kFBTextJustifyCenter
+    button.OnClick.Add(BtnCallback)
+    return button
+
+def CreateText(text):
+    emptySpace = FBLabel()
+    emptySpace.Caption = text
+    return emptySpace
+
+def CreateInput(text):
+    inputTxt = FBEdit()
+    if text:
+        inputTxt.Text = text
+    return inputTxt
+
+def CreateInputObjName(indx):
+    inputTxt = FBEdit()
+    inputTxt.input_id = indx
+    inputTxt.OnChange.Add(EditedInput)
+    return inputTxt
+    
+
+def CreateLockBox(text):
+    checkBtn = FBButton()
+    checkBtn.Caption = text
+    checkBtn.Style = FBButtonStyle.kFBCheckbox 
+    checkBtn.Justify = FBTextJustify.kFBTextJustifyCenter
+    checkBtn.OnClick.Add(BtnCallback)
+    return checkBtn
+
+def CreateLine(name, height, mainLyt):
+    x = FBAddRegionParam(10,FBAttachType.kFBAttachLeft,"")
+    y = FBAddRegionParam(height,FBAttachType.kFBAttachTop,"")
+    w = FBAddRegionParam(0,FBAttachType.kFBAttachRight,"")
+    h = FBAddRegionParam(25,FBAttachType.kFBAttachNone,"")
+    mainLyt.AddRegion(name, name, x, y, w, h)
+    lyt = FBHBoxLayout()
+    mainLyt.SetControl(name,lyt)
+    return lyt
+
+def CreateLine2Column(name, height, mainLyt):
+    x = FBAddRegionParam(240,FBAttachType.kFBAttachLeft,"")
+    y = FBAddRegionParam(height,FBAttachType.kFBAttachTop,"")
+    w = FBAddRegionParam(0,FBAttachType.kFBAttachRight,"")
+    h = FBAddRegionParam(25,FBAttachType.kFBAttachNone,"")
+    mainLyt.AddRegion(name, name, x, y, w, h)
+    lyt = FBHBoxLayout()
+    mainLyt.SetControl(name,lyt)
+    return lyt
+
+def CreateList(caption):
+    textInput = FBList()
+    textInput.Caption = caption
+    textInput.OnChange.Add(BtnCallback)
+    return textInput
+
+def PopulateLayout_Stage_Main(mainLyt):
+
+    lyt = CreateLine("firstRow", 40, mainLyt)
+
+    createBtn = CreateButton("Set Mocap")
+    lyt.Add(createBtn,115)
+
+    global wireFrameBtn
+    wireFrameBtn = CreateButton("Prop Vis")
+    wireFrameBtn.Style = FBButtonStyle.kFB2States
+    wireFrameBtn.Look = FBButtonLook.kFBLookColorChange
+    wireFrameBtn.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.6, 0.4, 0.4))
+    lyt.Add(wireFrameBtn,75)
+
+
+    lyt = CreateLine("thirdRow", 75, mainLyt)
+
+    createBtn = CreateButton("Retarget")
+    lyt.Add(createBtn,115)
+
+    global inputPropName
+    inputPropName = CreateInput("prop namespace...")
+    lyt.Add(inputPropName, 90)
+
+    lyt = CreateLine("fourthRow", 110, mainLyt)
+
+    dotCorrectionBtn = CreateButton("DOT Correct")
+    dotCorrectionBtn.Style = FBButtonStyle.kFB2States
+    dotCorrectionBtn.Look = FBButtonLook.kFBLookColorChange
+    dotCorrectionBtn.SetStateColor(FBButtonState.kFBButtonState0,FBColor(1.0, 0.0, 0.0))
+    dotCorrectionBtn.SetStateColor(FBButtonState.kFBButtonState1,FBColor(0.0, 0.0, 1.0))
+    lyt.Add(dotCorrectionBtn,115)
+
+    lyt = CreateLine("lastRow", 140, mainLyt)
+    space = CreateText(" ")
+    lyt.Add(space, 10)
+    lastTaskText = CreateText("NOW do offset")
+    lyt.Add(lastTaskText, 120)
+
+    #2Column:
+    lyt = CreateLine2Column("2column_1",30, mainLyt)
+    
+    mocapPropTxt = CreateText("Mocap Prop Name:")
+    lyt.Add(mocapPropTxt, 100)
+
+    mocapPropInput = CreateInputObjName(1)
+    lyt.Add(mocapPropInput, 95)
+    mocapPropTxt = CreateText("")
+    lyt.Add(mocapPropTxt,95)
+    mocapPropTxt.Visible = False
+
+    lockBox1 = CreateLockBox("lock1")
+    lyt.Add(lockBox1, 50)
+    
+
+    uiCheckBoxes.lyt1 = lyt
+    uiCheckBoxes.input1 = mocapPropInput
+    uiCheckBoxes.txt1 = mocapPropTxt
+    uiCheckBoxes.locker1 = lockBox1
+
+
+    lyt = CreateLine2Column("2column_2",60, mainLyt)
+    
+    propRootBoneTxt = CreateText("Prop Root Bone:")
+    lyt.Add(propRootBoneTxt, 100)
+    
+    propRootBoneInput = CreateInputObjName(2)
+    lyt.Add(propRootBoneInput, 95)
+    propRootBoneTxt = CreateText("")
+
+    lockBox2 = CreateLockBox("lock2")
+    lyt.Add(lockBox2, 50)
+
+    uiCheckBoxes.lyt2 = lyt
+    uiCheckBoxes.input2 = propRootBoneInput
+    uiCheckBoxes.txt2 = propRootBoneTxt
+    uiCheckBoxes.locker2 = lockBox2
+
+    lyt = CreateLine2Column("2column_3",90, mainLyt)
+    
+    mocapCharBoneTxt = CreateText("Mocap Char Bone:")
+    lyt.Add(mocapCharBoneTxt, 100)
+
+    mocapCharBoneInput = CreateInputObjName(3)
+    lyt.Add(mocapCharBoneInput, 95)
+    mocapCharBoneTxt = CreateText("")
+    
+    lockBox3 = CreateLockBox("lock3")
+    lyt.Add(lockBox3, 50)
+    
+    uiCheckBoxes.lyt3 = lyt
+    uiCheckBoxes.input3 = mocapCharBoneInput
+    uiCheckBoxes.txt3 = mocapCharBoneTxt
+    uiCheckBoxes.locker3 = lockBox3
+
+
+    lyt = CreateLine2Column("2column_4",120, mainLyt)
+    
+    charBoneTxt = CreateText("Char Bone:")
+    lyt.Add(charBoneTxt, 100)
+
+    
+    charBoneInput = CreateInputObjName(4)
+    lyt.Add(charBoneInput, 95)
+    charBoneTxt = CreateText("")
+
+    lockBox4 = CreateLockBox("lock4")
+    lyt.Add(lockBox4, 50)
+
+    uiCheckBoxes.lyt4 = lyt
+    uiCheckBoxes.input4 = charBoneInput
+    uiCheckBoxes.txt4 = charBoneTxt
+    uiCheckBoxes.locker4 = lockBox4
+
+
+def CreateMainUI():
+    global toolFullName
+    t = FBCreateUniqueTool(toolFullName)
+    t.StartSizeX = 477  
+    t.StartSizeY = 230
+    PopulateLayout_Stage_Main(t)
+    ShowTool(t)
+
+
+userObjs = PickedObjects()
+uiCheckBoxes = UILockObjs()
+CreateMainUI()
+
+
+def duplicate_rig_model(source_model, specifiedNamespace, parent=None):
+
+    # Clone the current model
+    clone = source_model.Clone()
+    if specifiedNamespace:
+        clone.LongName = str(specifiedNamespace) + clone.Name
+    
+    # Set the parent if specified
+    if parent:
+        clone.Parent = parent
+
+    # Recursively clone all children
+    for child in source_model.Children:
+        duplicate_rig_model(child, specifiedNamespace, clone)
+
+    return clone
+
+
+
+
+########
+#!!!fix the lock system: when is locked and user type in input!!!
+#do the rest

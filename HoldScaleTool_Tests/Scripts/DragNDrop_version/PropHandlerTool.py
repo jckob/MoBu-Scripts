@@ -9,8 +9,8 @@ if script_dir not in sys.path:
 from pyfbsdk import *
 from pyfbsdk_additions import * 
 #from DeltaCorrect import apply_corrections
-from Setter import CreateSetterUI
-from relation_constraint_configure import create_relation, relationObjs
+from Setter import * 
+from HoldScaleTool_Tests.Scripts.relation_constraint_configure import create_relation, relationObjs
 
 
 toolName = "Prop Handler Tool  v"
@@ -31,6 +31,7 @@ class PickedObjects:
     mocapPropRootClone = None
 
 userObjs = PickedObjects()
+
 def assign_prop_mocap(isWireFrameOn):
     if _are_mocap_objs_set():
         newPropRig = duplicate_rig_model(userObjs.propRootBone, defNamespace, None)
@@ -47,7 +48,8 @@ def assign_prop_mocap(isWireFrameOn):
             
         set_prop_visibility(isWireFrameOn)
     else:
-        print("Assign objects first!")
+        print("no")
+        
 
 def set_prop_visibility(isWireFrameOn):
     if userObjs.mocapProp.Children[0]:
@@ -81,7 +83,7 @@ def create_retarget_markers(propname):
 
 
 def _are_mocap_objs_set():
-    if userObjs.mocapProp is not None and userObjs.propRootBone is not None :
+    if assignedObj.mocapProp is not None and assignedObj.propRootBone is not None :
         return True
     return False
 
@@ -100,7 +102,6 @@ def create_relation_constraint():
 def BtnCallback(control, event):
     if control.Caption == "Set Objects":
         CreateSetterUI()
-        #Setter.CreateTool()
     elif control.Caption == "Set Mocap":
         print("assigning mocap...")
         assign_prop_mocap(wireFrameBtn.State)

@@ -18,7 +18,6 @@ class SendingObjects:
 
 assignedObj = SendingObjects()
 
-print(assignedObj.mocapCharBone)
 def SetupPropertyList(control, model):
     correctContainer = _get_container(control)
     correctContainer.Items.removeAll()
@@ -34,6 +33,9 @@ def SetupPropertyList(control, model):
         set_object(control, model)
     else:
         set_object(control, None)
+    print(assignedObj.mocapProp)
+    print(assignedObj.propRootBone)
+    print("set")
 
 def _get_container(control):
     if control.Caption == "mocapProp":
@@ -62,6 +64,8 @@ def send_objects_to_MainTool():
         userObjs.mocapProp = assignedObj.mocapProp
         userObjs.propRootBone = assignedObj.propRootBone
         print("SET_M READY")
+        print(userObjs.mocapProp)
+        print(assignedObj.propRootBone)
     else:
         userObjs.mocapProp = None
         userObjs.propRootBone = None
@@ -77,22 +81,29 @@ def send_objects_to_MainTool():
  
 
 def EventContainerDblClick(control, event):
+    print("2click")
     SetupPropertyList(control, None)
     
 def EventContainerDragAndDrop(control, event):
+    print("dragged")
     if event.State == FBDragAndDropState.kFBDragAndDropDrag:
         event.Accept()
     elif event.State == FBDragAndDropState.kFBDragAndDropDrop:
         SetupPropertyList( control, event.Components[0])
+    
 
 def SceneChanged(scene, event):
+    print("scene changed")
     for container in [tool.container1, tool.container2, tool.container3, tool.container4]:
         if len(container.Items) != 0 and \
             event.Type == FBSceneChangeType.kFBSceneChangeDetach  and \
             event.ChildComponent == tool.model:
             SetupPropertyList(None, None)
 
-
+def OnToolDestroy(self, control, event):
+        print("destroyed")
+        FBSystem().Scene.OnChange.Remove(SceneChanged)
+        
 def PopulateLayout(mainLyt):    
     x = FBAddRegionParam(5,FBAttachType.kFBAttachLeft,"")
     y = FBAddRegionParam(0,FBAttachType.kFBAttachTop,"")
@@ -137,11 +148,6 @@ def PopulateLayout(mainLyt):
     # register when this tool is destroyed.
     tool.OnUnbind.Add(OnToolDestroy)
     
-    
-def OnToolDestroy(self, control, event):
-        print("destroyed")
-        FBSystem().Scene.OnChange.Remove(SceneChanged)
-
 
 def CreateSetterUI():
     global tool
