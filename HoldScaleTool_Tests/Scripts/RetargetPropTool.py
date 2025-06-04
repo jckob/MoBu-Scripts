@@ -29,6 +29,8 @@ class PickedObjects:
     propOffsetMaker = None
     mocapPropRootClone = None
 
+    propName_toConstraint = str
+
 class UILockObjs():
     input1 = None
     input2 = None
@@ -122,6 +124,7 @@ def set_prop_visibility(isWireFrameOn):
             
 
 def create_retarget_markers(propname):
+    userObjs.propName_toConstraint = propname
     propSource = FBModelMarker(defNamespace + str(propname))
     propSource.Show = True
     propSource.MarkerSize = 200
@@ -155,16 +158,18 @@ def _are_hands_objs_set():
     return False
 
 def send_objects_to_relation_constraint():
-    relationObjs.mocapPropName = userObjs.mocapProp.LongName
-    relationObjs.retPropBoneName = userObjs.propRootBone.LongName
-    relationObjs.retPropSourceName = userObjs.propSource.LongName
-    relationObjs.retOffsetName = userObjs.propOffsetMaker.LongName
-    relationObjs.mocapCharBoneName = userObjs.mocapCharBone.LongName
-    relationObjs.charBoneName = userObjs.charBone.LongName
+    relationObjs.mocapProp = userObjs.mocapProp
+    relationObjs.retPropBone = userObjs.propRootBone
+    relationObjs.retPropSource = userObjs.propSource
+    relationObjs.retOffset = userObjs.propOffsetMaker
+    relationObjs.mocapCharBone = userObjs.mocapCharBone
+    relationObjs.charBone = userObjs.charBone
+
+    relationObjs.propName = userObjs.propName_toConstraint
 
 def create_relation_constraint():
     if _are_hands_objs_set():
-        create_retarget_markers(inputPropName.Caption)
+        create_retarget_markers(inputPropName.Text)
         send_objects_to_relation_constraint()
         create_relation()
     else:
@@ -188,12 +193,29 @@ def EditedInput(control, event):
 def LockingCheckboxes(control, event):
     uiLockers.check_is_locked(control.btnLock_id)
 
+def SetNameOfObject(control, event):
+    selectedList = FBModelList()
+    FBGetSelectedModels(selectedList)
+    match control.Caption:
+        case "Mocap Prop Name:":
+            input_Indx = 1
+        case "Prop Root Bone:":
+            input_Indx = 2
+        case "Mocap Char Bone:":
+            input_Indx = 3
+        case "Char Bone:":
+            input_Indx = 4
+    try:
+        inputName =  getattr(uiLockers,f"input{input_Indx}")
+        inputName.Text = selectedList[0].LongName
+    except:
+        print("error in typing selected obj name")
 
-def CreateButton(caption):
+def CreateButton(caption, onClickCallback):
     button = FBButton()
     button.Caption = str(caption)
     button.Justify = FBTextJustify.kFBTextJustifyCenter
-    button.OnClick.Add(BtnCallback)
+    button.OnClick.Add(onClickCallback)
     return button
 
 def CreateText(text):
@@ -270,11 +292,21 @@ def PopulateLayout_Stage_Main(mainLyt):
 
     lyt = CreateLine("firstRow", 40, mainLyt)
 
-    createBtn = CreateButton("Set Mocap")
+    inputPropUITxt = CreateText("Insert PropName")
+    lyt.Add(inputPropUITxt, 110)
+
+    global inputPropName
+    inputPropName = CreateInput("PropName")
+    lyt.Add(inputPropName, 90)
+
+    
+    lyt = CreateLine("thirdRow", 75, mainLyt)
+
+    createBtn = CreateButton("Set Mocap",BtnCallback)
     lyt.Add(createBtn,115)
 
     global wireFrameBtn
-    wireFrameBtn = CreateButton("Prop Vis")
+    wireFrameBtn = CreateButton("Prop Vis",BtnCallback)
     wireFrameBtn.Style = FBButtonStyle.kFB2States
     wireFrameBtn.Look = FBButtonLook.kFBLookColorChange
     wireFrameBtn.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.6, 0.4, 0.4))
@@ -283,34 +315,23 @@ def PopulateLayout_Stage_Main(mainLyt):
     uiLockers.visibilityBtn = wireFrameBtn
 
 
-    lyt = CreateLine("thirdRow", 75, mainLyt)
-
-    createBtn = CreateButton("Retarget")
-    lyt.Add(createBtn,115)
-
-    global inputPropName
-    inputPropName = CreateInput("prop namespace...")
-    lyt.Add(inputPropName, 90)
-
     lyt = CreateLine("fourthRow", 110, mainLyt)
 
-    dotCorrectionBtn = CreateButton("DOT Correct")
+    createBtn = CreateButton("Retarget",BtnCallback)
+    lyt.Add(createBtn,115)
+
+    dotCorrectionBtn = CreateButton("DOT Correct..wip",BtnCallback)
     dotCorrectionBtn.Style = FBButtonStyle.kFB2States
     dotCorrectionBtn.Look = FBButtonLook.kFBLookColorChange
     dotCorrectionBtn.SetStateColor(FBButtonState.kFBButtonState0,FBColor(1.0, 0.0, 0.0))
     dotCorrectionBtn.SetStateColor(FBButtonState.kFBButtonState1,FBColor(0.0, 0.0, 1.0))
     lyt.Add(dotCorrectionBtn,115)
-
-    lyt = CreateLine("lastRow", 140, mainLyt)
-    space = CreateText(" ")
-    lyt.Add(space, 10)
-    lastTaskText = CreateText("NOW do offset")
-    lyt.Add(lastTaskText, 120)
+    dotCorrectionBtn.Visible = False
 
     #2Column:
     lyt = CreateLine2Column("2column_1",40, mainLyt)
     
-    mocapPropTxt = CreateText("Mocap Prop Name:")
+    mocapPropTxt = CreateButton("Mocap Prop Name:",SetNameOfObject)
     lyt.Add(mocapPropTxt, 100)
     mocapPropInput = CreateInputObjName(1)
     lyt.Add(mocapPropInput, 95)
@@ -324,7 +345,7 @@ def PopulateLayout_Stage_Main(mainLyt):
 
     lyt = CreateLine2Column("2column_2",70, mainLyt)
 
-    propRootBoneTxt = CreateText("Prop Root Bone:")
+    propRootBoneTxt = CreateButton("Prop Root Bone:",SetNameOfObject)
     lyt.Add(propRootBoneTxt, 100)
     
     propRootBoneInput = CreateInputObjName(2)
@@ -338,7 +359,7 @@ def PopulateLayout_Stage_Main(mainLyt):
 
     lyt = CreateLine2Column("2column_3",100, mainLyt)
     
-    mocapCharBoneTxt = CreateText("Mocap Char Bone:")
+    mocapCharBoneTxt = CreateButton("Mocap Char Bone:",SetNameOfObject)
     lyt.Add(mocapCharBoneTxt, 100)
     mocapCharBoneInput = CreateInputObjName(3)
     lyt.Add(mocapCharBoneInput, 95)
@@ -352,7 +373,7 @@ def PopulateLayout_Stage_Main(mainLyt):
 
     lyt = CreateLine2Column("2column_4",130, mainLyt)
     
-    charBoneTxt = CreateText("Char Bone:")
+    charBoneTxt = CreateButton("Char Bone:",SetNameOfObject)
     lyt.Add(charBoneTxt, 100)
 
     

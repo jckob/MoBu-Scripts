@@ -9,11 +9,12 @@ class RelationConstraintObjConfig:
     mocapCharBone= None
     charBone = None
 
-    #mocapProp = None
+    propName = str
 
-relationObjs = RelationConstraintObjConfig()
+
 def define_objects():
-    constrain = FBConstraintRelation("C_RelationProp")
+    relationObjs = RelationConstraintObjConfig()
+    constrain = FBConstraintRelation(f"C_RelationProp_{relationObjs.propName}")
     constrain.Active = True
 
     mocapProp_BoxIn = constrain.SetAsSource(relationObjs.mocapProp)
