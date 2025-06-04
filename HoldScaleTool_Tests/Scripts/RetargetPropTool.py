@@ -127,15 +127,15 @@ def create_retarget_markers(propname):
     userObjs.propName_toConstraint = propname
     propSource = FBModelMarker(defNamespace + str(propname))
     propSource.Show = True
-    propSource.MarkerSize = 200
+    propSource.Size = 200
     propSource.Color = FBColor(1, 0.5, 0)
     propSource.Look = FBMarkerLook.kFBMarkerLookLightCross
 
     propOffsetMaker = FBModelMarker(defNamespace + "Offset_" + str(propname))
     propOffsetMaker.Show = True
-    propOffsetMaker.MarkerSize = 400
+    propOffsetMaker.Size = 500
     propOffsetMaker.Color = FBColor(1, 1, 0)
-    propOffsetMaker.Look = FBMarkerLook.kFBMarkerLookCircle
+    propOffsetMaker.Look = FBMarkerLook.kFBMarkerLookLightCross
     
     userObjs.propSource = propSource
     userObjs.propOffsetMaker = propOffsetMaker
