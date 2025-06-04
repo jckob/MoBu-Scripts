@@ -11,9 +11,9 @@ class RelationConstraintObjConfig:
 
     propName = str
 
+relationObjs = RelationConstraintObjConfig()
 
 def define_objects():
-    relationObjs = RelationConstraintObjConfig()
     constrain = FBConstraintRelation(f"C_RelationProp_{relationObjs.propName}")
     constrain.Active = True
 
