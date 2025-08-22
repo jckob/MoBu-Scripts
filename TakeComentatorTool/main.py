@@ -6,6 +6,13 @@ import sys
 sys.path.append(os.path.realpath(__file__))
 
 
+script_dir = os.path.dirname(os.path.realpath(__file__))
+print("Script directory:", script_dir)
+print("Working directory:", os.getcwd())
+
+if script_dir not in sys.path:
+    sys.path.insert(0, script_dir)
+
 script_dir = os.path.dirname(__file__)
 if script_dir not in sys.path:
     sys.path.append(script_dir)
@@ -15,6 +22,11 @@ if script_dir not in sys.path:
 from pyfbsdk import *
 import connectSheet as connector
 import mobuUI as ui
+
+
+class FakeControl:
+    def __init__(self, caption):
+        self.Caption = caption
 
 
 def connect_table():
@@ -30,11 +42,10 @@ def set_inputs():
 
 
 def set_anim_status():
+    lFbp = create_start_progress("initialize...update")
     connect_table()
     set_inputs()
-
     if ui.uiObjRef.checkBoxAllBtn.State == 1:
-        lFbp = create_start_progress()
         takeTab = []
         for take in FBSystem().Scene.Takes:
             takeTab.append(take)
@@ -46,9 +57,7 @@ def set_anim_status():
             if (lFbp.UserRequestCancell()):
                 break
 
-            lFbp.Text = f"downloading.... {take.Name}"
-            lFbp.Percent = percent
-
+            set_progress_status(lFbp, f"Set up.... {take.Name}", percent)
             returnStatus = connector.getAnimStatus(take.Name)
             if returnStatus != -1:
                 take.Comments = returnStatus
@@ -77,6 +86,7 @@ def refresh_list(listUI, list):
             listUI.Items.append(item)
         else:
             listUI.Items.append(item.Name)
+   
 
 def set_default_selected_lists():
     ui.uiObjRef.inputKeyNameList.Selected((find_str_in_list(connector.mySheetClass.keyName, ui.uiObjRef.inputKeyNameList.Items)), True)
@@ -92,9 +102,7 @@ def find_str_in_list(name, list):
              
 
 def BtnCallback(control, event):
-    if control.Caption == "ConnectTable":
-        print("connected clicked")
-    elif control.Caption == "CheckInputs":
+    if control.Caption == "CheckInputs":
         print("Check inputs clicked")
         set_inputs()
     elif control.Caption == "CheckAllTakes":
@@ -106,13 +114,13 @@ def BtnCallback(control, event):
 
 def set_ui_def():
     ui.CreateTool()
+    
     ui.uiObjRef.connectBtn.OnClick.Add(BtnCallback)
     ui.uiObjRef.checkInputs.OnClick.Add(BtnCallback)
     ui.uiObjRef.checkBoxAllBtn.OnClick.Add(BtnCallback)
     ui.uiObjRef.updateBtn.OnClick.Add(BtnCallback)
 
-
-def create_start_progress():
+def create_start_progress(caption):
     # Create a FBProgress object and set default values for the caption and text.
     lFbp = FBProgress()
 
@@ -120,8 +128,13 @@ def create_start_progress():
     lFbp.ProgressBegin()
 
     # Set the custom task name.
-    lFbp.Caption = "Download & Setup Data"
+    lFbp.Caption = caption
     return lFbp
+
+def set_progress_status(lFbp, text, percent):
+    lFbp.Caption = text
+    lFbp.Percent = percent
+
 
 set_ui_def()
 set_colmns_to_lists()

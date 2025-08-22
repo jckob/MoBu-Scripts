@@ -18,28 +18,18 @@ def connect_credentials():
         'https://www.googleapis.com/auth/spreadsheets'
 
     ]
-
-    #creds = Credentials.from_service_account_file("TakeComentatorTool/credentials.json", scopes=scopes)
     creds_path = r"C:\Projekty\Repos\MoBu-Scripts\Sensitive\credentials.json"
     if not os.path.isfile(creds_path):
         raise FileNotFoundError(f"Nie znaleziono pliku: {creds_path}")
-
-    print("Using credentials file at:", creds_path)
-
-
-    #cred_file = os.path.join(script_dir, "credentials.json")
-    #print("Using credentials file at:", cred_file)
-    #creds = Credentials.from_service_account_file(cred_file, scopes=scopes)
-
-    creds = Credentials.from_service_account_file(creds_path, scopes=scopes)
-    
-    return creds
+        print("Using credentials file at:", creds_path)
+        creds = Credentials.from_service_account_file(creds_path, scopes=scopes)
+        return creds
 
 class SheetInsides:
     client = gspread.authorize(connect_credentials())
     sheet_id = "10RaHeAbc3ECbVyjuchnxoNgRtvNmes1sPU3Dq2iok54"
     workbook = client.open_by_key(sheet_id)
-    
+
 
 class SheetClass:
     sheetName = "Summary"
@@ -74,10 +64,6 @@ def getAnimStatus(lookingAnim):
     except:
         print("Error: no found anim")
         return -1
-    
-#print(getAnimStatus(input("Enter anim name: ")))
 
 mySheetClass = SheetClass()
 mySheetInsides = SheetInsides()
-
-#print(getAnimStatus(FBSystem().CurrentTake.Name))

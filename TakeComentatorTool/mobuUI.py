@@ -1,5 +1,5 @@
-from  pyfbsdk import *
-from pyfbsdk_additions import *
+from  pyfbsdk import FBEdit, FBList, FBButton, FBLabel, FBTextJustify, FBAttachType, ShowTool, FBAddRegionParam, FBButtonStyle
+from pyfbsdk_additions import  FBHBoxLayout, FBCreateUniqueTool
 
 toolFullName = "Take Commentator Tool"
 
