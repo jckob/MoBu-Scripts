@@ -1,0 +1,23 @@
+[
+    {
+        "nameTool": "Dividing Take Tool",
+        "mainFile": "vDividingTakes.py",
+        "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts\\Vanilla"
+    },
+    {
+        "nameTool": "Take Commentator",
+        "mainFile": "main.py",
+        "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts\\Rare\\TakeComentatorTool"
+    },
+    {
+        "nameTool": "EyeCtrl Creator",
+        "mainFile": "vEyeCtrCreator.py",
+        "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts\\Vanilla"
+    },
+    {
+        "nameTool": "Copy Diagonal Anims",
+        "mainFile": "vCopyDiagonalAnims_Tool.py",
+        "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts\\Vanilla"
+    }
+
+]

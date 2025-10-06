@@ -16,20 +16,17 @@ from pyfbsdk import FBAddRegionParam, FBAttachType, FBTool, ShowTool, FBWidgetHo
 from pyfbsdk_additions import FBToolList, FBAddTool, FBDestroyToolByName
 import shiboken2
 from PySide2 import QtCore, QtUiTools
+from PySide2.QtWidgets import QPushButton
 
 
-UI_PATH = os.path.join(os.path.dirname(__file__), "login.ui")
+UI_PATH = os.path.join(os.path.dirname(__file__), "mainUI.ui")
 
 class UIObjects():
     def __init__(self):
-        self.inputSheetName = None
-        self.inputKeyNameList = None
-        self.inputValueNameList = None
-        self.connectBtn = None
-        self.checkInputs = None
-        self.checkBoxAllBtn = None
-        self.updateBtn = None
-        self.clearCommentsBtn = None
+        self.createMarkersBtn = None
+        self.doMarkersBtn = None
+        self.showWindowBtn = None
+        
 
         self.sizes = Size()
 
@@ -62,25 +59,19 @@ class NativeWidgetHolder(FBWidgetHolder):
         file.open(QtCore.QFile.ReadOnly)
         self.ui = loader.load(file)
         file.close
-
+        
         self.mNativeQtWidget = self.ui
+        uiObjRef.createMarkersBtn = self.ui.findChild(QPushButton, "createMarkersBtn")
+        uiObjRef.doMarkersBtn = self.ui.findChild(QPushButton, "doMarkersBtn")
+        uiObjRef.showWindowBtn = self.ui.findChild(QPushButton, "showWindowBtn")
 
-
-        uiObjRef.inputSheetName = self.ui.InputSheetName
-        uiObjRef.inputKeyNameList = self.ui.InputKeyNameList
-        uiObjRef.inputValueNameList = self.ui.InputValueNameList
-
-        uiObjRef.checkInputs = self.ui.CheckInputsButton
-        uiObjRef.checkBoxAllBtn = self.ui.CheckAllTakes
-        uiObjRef.updateBtn = self.ui.UpdateButton
-        uiObjRef.clearCommentsBtn = self.ui.ClearCommentsButton
 
         uiObjRef.sizes.X = self.ui.geometry().width()
         uiObjRef.sizes.Y = self.ui.geometry().height()
 
 
         tool.StartSizeX = uiObjRef.sizes.X
-        tool.StartSizeY = uiObjRef.sizes.Y + 25
+        tool.StartSizeY = uiObjRef.sizes.Y
         print("Tool start size: {0}, {1}".format(tool.StartSizeX, tool.StartSizeY))
 
         #
@@ -107,7 +98,7 @@ class NativeQtWidgetTool(FBTool):
         self.BuildLayout()
         
 
-gToolName = "Take Commentator Tool"
+gToolName = "Footskate"
 
 #Development? - need to recreate each time!!
 gDEVELOPMENT = True
@@ -127,4 +118,4 @@ else:
 def show_tool(): 
     ShowTool(tool)
 
-show_tool()
+#show_tool()

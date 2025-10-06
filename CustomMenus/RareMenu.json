@@ -1,0 +1,13 @@
+[
+    {
+        "nameTool": "Dividing Take Tool",
+        "mainFile": "rDividingTakesTool.py",
+        "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts\\Rare\\DividingTakesTool"
+    },
+    {
+        "nameTool": "Take Commentator",
+        "mainFile": "modernMain.py",
+        "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts\\Rare\\TakeComentatorTool"
+    }
+
+]

@@ -4,22 +4,20 @@
 ##    #
 # #  ###
 
-from pyfbsdk import *
-from pyfbsdk_additions import *
+from pyfbsdk import FBSystem, FBTime, FBTimeSpan, FBPlayerControl, ShowTool
+from pyfbsdk_additions import FBCreateUniqueTool
 
 toolName = "Take Tool v"
-toolVersion = 1.5
-toolFullName = toolName + str(toolVersion)
+toolVersion = 2.0
+toolCategory = "vanilla"
+toolFullName = toolName + str(toolVersion) + " " + toolCategory
 
 start_time = None
 end_time = None
 
-global isStart, fromStart
+global isStart
 isStart = False
-fromStart = True
-# Helper var
-change_to_copied_take = False  # True if u want to change to copied take on scene
-#changable in UI
+change_to_copied_take = False
 
 
 # Button creation
@@ -95,12 +93,12 @@ def BtnCallback(control, event):
             FBSystem().CurrentTake.Name = get_take_name(True)
 
         FBSystem().Scene.Evaluate()
+        
     elif control.Caption == "Create Take":
         global newTakeName
         #set up vars about take
         originalTakeName = get_current_take_name()  #orignal take Name
         newTakeName = get_take_name(False)
-
 
         try:
             #frames case
@@ -381,10 +379,9 @@ def CreateTool():
     global toolFullName
     t = FBCreateUniqueTool(toolFullName)
     t.StartSizeX = 310
-    t.StartSizeY = 180
+    t.StartSizeY = 185
     PopulateLayout(t)
     ShowTool(t)
-
 
 
 

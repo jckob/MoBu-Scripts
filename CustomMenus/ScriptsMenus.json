@@ -1,0 +1,57 @@
+{
+    "🟩 1.0 Ready": [
+        {
+            "nameTool": "Dividing Take Tool",
+            "mainFile": "DividingTakes.py",
+            "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts"
+        },
+        {
+        "nameTool": "EyeCtrl Creator",
+        "mainFile": "vEyeCtrCreator.py",
+        "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts\\Vanilla"
+        },
+        {
+            "nameTool": "Copy Diagonal Anims",
+            "mainFile": "vCopyDiagonalAnims_Tool.py",
+            "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts\\Vanilla"
+        },
+        {
+            "submenu": "Take Tool Comentator",
+            "tools": [
+                {
+                    "nameTool": "NEW",
+                    "mainFile": "modernMain.py",
+                    "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts\\TakeComentatorTool"
+                },
+                {
+                    "nameTool": "old",
+                    "mainFile": "main.py",
+                    "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts\\TakeComentatorTool"
+                }
+            ]
+        }
+    ],
+
+    "🟨 WIP": [
+        {
+            "nameTool": "Cam Renderer",
+            "mainFile": "renderTool.py",
+            "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts"
+        },
+        {
+            "nameTool": "fooskater",
+            "mainFile": "footskateMain.py",
+            "filePATH": "C:\\Projekty\\Repos\\MoBu-Scripts\\Footskate"
+        },
+        {
+            "nameTool": "Later",
+            "mainFile": "lol.py",
+            "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts"
+        },
+        {
+            "nameTool": ":)",
+            "mainFile": "lol.py",
+            "filePATH": "C:\\Users\\jakub\\Documents\\MyMoBu\\MoBuScripts"
+        }
+    ]
+}

@@ -19,6 +19,7 @@ from pyfbsdk import FBSystem, FBProgress
 import connectSheet as connector
 import modernUI as ui
 from PySide2 import QtWidgets
+import asyncio
 
 
 class FakeControl:
@@ -43,39 +44,48 @@ def set_anim_status():
     connect_table()
     set_inputs()
     lFbp = create_start_progress("initialize...update")
-    if int(ui.uiObjRef.checkBoxAllBtn.isChecked()) == 1:
-        takeTab = []
-        for take in FBSystem().Scene.Takes:
-            takeTab.append(take)
-        maxTakeNr = len(takeTab)
-        currTakeNr = 1
-        for take in takeTab:
-            print(f"Processing take!: {take.Name}")
-            percent = int((currTakeNr/maxTakeNr) * 100)
-            if (lFbp.UserRequestCancell()):
-                break
-            
-            set_progress_status(lFbp, f"Set up.... {take.Name}", percent)
-            returnStatus = connector.getAnimStatus(take.Name)
-            if returnStatus != -1:
-                take.Comments = returnStatus
-                print(f"Animation status for take '{take.Name}' set to: {returnStatus}")
 
-            currTakeNr += 1
-    else:
-        try:
-            takeName = FBSystem().CurrentTake.Name
-            set_progress_status(lFbp, f"Check input.... {takeName}", 40)
-            set_progress_status(lFbp, f"Downloading.... {takeName}", 80)
-            returnStatus = connector.getAnimStatus(takeName)
-            if returnStatus != -1:
-                FBSystem().CurrentTake.Comments = returnStatus
-                print(f"Animation status for take '{takeName}' set to: {returnStatus}")
-        except:
-            print(f"in mobu: {FBSystem().CurrentTake.Name}, in Table: not found!!!")
+    async def process_all():
+        if int(ui.uiObjRef.checkBoxAllBtn.isChecked()) == 1:
+            takeTab = list(FBSystem().Scene.Takes)
+            maxTakeNr = len(takeTab)
+            currTakeNr = 0
+
+            for take in takeTab:
+                print(f"Processing take!: {take.Name}")
+                percent = int((currTakeNr / maxTakeNr) * 100)
+                if lFbp.UserRequestCancell():
+                    break
+
+                set_progress_status(lFbp, f"Set up.... {take.Name}", percent)
+
+                # await connector call here
+                returnStatus = await connector.get_anim(take.Name)
+                if returnStatus not in (-1, None):
+                    take.Comments = returnStatus
+                    print(f"Animation status for take '{take.Name}' set to: {returnStatus}")
+
+                currTakeNr += 1
+        else:
+            try:
+                takeName = FBSystem().CurrentTake.Name
+                set_progress_status(lFbp, f"Check input.... {takeName}", 40)
+                set_progress_status(lFbp, f"Downloading.... {takeName}", 80)
+
+                # keep sync connector here if it’s not async yet
+                returnStatus = await connector.get_anim(takeName)
+                if returnStatus not in (-1, None):
+                    FBSystem().CurrentTake.Comments = returnStatus
+                    print(f"Animation status for take '{takeName}' set to: {returnStatus}")
+            except Exception as e:
+                print(f"in mobu: {FBSystem().CurrentTake.Name}, in Table: not found!!! ({e})")
+
+    # run everything inside one loop
+    asyncio.run(process_all())
 
     lFbp.ProgressDone()
-    del( lFbp)
+    del lFbp
+
 
 def set_colmns_to_lists():
     refresh_list(ui.uiObjRef.inputKeyNameList, connector.get_column_values(1))
