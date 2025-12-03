@@ -135,6 +135,14 @@ def update_take_name():
         fixedTakeName = fixedTakeName[:-sliderTxtRemove]
     fixedTakeNameTxt.Caption = fixedTakeName
 
+def refresh_diagonal_list(listUI, list):
+    listUI.Items.removeAll()
+    for item in list:
+        if isinstance(item, str):
+            listUI.Items.append(item)
+        else:
+            listUI.Items.append(item.Name)
+
 
 def BtnCallback(control, event):
     update_take_name()
@@ -153,14 +161,6 @@ def BtnCallback(control, event):
     elif control.Caption == "Slider":
         print(control.Value)
 
-
-def refresh_diagonal_list(listUI, list):
-    listUI.Items.removeAll()
-    for item in list:
-        if isinstance(item, str):
-            listUI.Items.append(item)
-        else:
-            listUI.Items.append(item.Name)
 
 def CreateButton(caption):
     button = FBButton()
